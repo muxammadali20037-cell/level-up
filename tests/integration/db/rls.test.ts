@@ -418,9 +418,10 @@ describe("organizations", () => {
 
   type AggregateRow = {
     participantCount: number;
+    // jsonb keys are returned as written by SQL (snake_case); only column names are camelCased.
     avgComposite: number;
     levelDistribution: Record<string, number>;
-    skillAverages: { skillId: string; n: number }[];
+    skillAverages: { skill_id: string; n: number }[];
   };
   const aggregate = (userId: string, teamId: string) =>
     asUser(userId, (tx) => tx<AggregateRow[]>`select * from public.team_assessment_aggregate(${teamId})`);
@@ -521,7 +522,7 @@ describe("organizations", () => {
     await closeTeamAssessment(sql, smallTeamId);
     const [row] = await aggregate(owner, teamId);
     expect(row!.participantCount).toBe(3);
-    expect(row!.skillAverages.map((a) => a.skillId).sort()).toEqual([...own.skillIds].sort());
+    expect(row!.skillAverages.map((a) => a.skill_id).sort()).toEqual([...own.skillIds].sort());
     expect(row!.skillAverages.every((a) => a.n >= 3)).toBe(true);
     expect(await aggregate(owner, smallTeamId)).toEqual([]);
   });

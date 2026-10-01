@@ -21,7 +21,8 @@ export function createSql(url: string, options: { max?: number } = {}): Sql {
     idle_timeout: 20,
     connect_timeout: 10,
     prepare: false,
-    transform: { ...postgres.camel, undefined: null },
+    // Column names only: converting keys inside jsonb values would corrupt maps keyed by slugs (e.g. "objection_handling").
+    transform: { column: { from: postgres.toCamel, to: postgres.fromCamel }, undefined: null },
     types: {
       numeric: {
         to: NUMERIC_OID,
