@@ -1,0 +1,17 @@
+{
+  "title": "Natijani ulashish",
+  "defaultText": "Men {profession} LEVEL testidan oʻtdim. Natijam: LEVEL {level}. Sizniki nechchi?",
+  "cta": "LEVELINGIZNI TEKSHIRING",
+  "headline": "Sen qaysi LEVELdasan?",
+  "showName": "Ismimni koʻrsatish",
+  "showNameHint": "Odatda oʻchiq. Faqat ismingiz koʻrsatiladi.",
+  "formats": {
+    "story": "Story",
+    "square": "Kvadrat",
+    "telegram": "Telegram"
+  },
+  "copyLink": "Havolani nusxalash",
+  "linkCopied": "Havola nusxalandi",
+  "download": "Rasmni yuklab olish",
+  "shareTelegram": "Telegramda ulashish"
+}

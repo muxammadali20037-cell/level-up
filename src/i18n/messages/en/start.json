@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "title": "Choose your field"
+  },
+  "language": {
+    "title": "Choose a language",
+    "subtitle": "You can change it at any time."
+  },
+  "profession": {
+    "title": "In which field do you want to find your level?",
+    "subtitle": "Pick the field closest to what you do or want to do.",
+    "search": "Search professions"
+  },
+  "specialization": {
+    "title": "Choose your specialization",
+    "subtitle": "The questions will be tailored to it.",
+    "general": "Not sure yet — general"
+  },
+  "comingSoon": {
+    "title": "Field selection is coming next",
+    "text": "This step is being prepared. Soon you’ll pick your field here and start the test.",
+    "back": "Back to home"
+  }
+}

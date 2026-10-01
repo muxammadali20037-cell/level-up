@@ -1,0 +1,17 @@
+{
+  "title": "Поделиться результатом",
+  "defaultText": "Мой результат в LEVEL-тесте ({profession}): LEVEL {level}. А какой у тебя?",
+  "cta": "ПРОВЕРЬТЕ СВОЙ LEVEL",
+  "headline": "На каком ты LEVEL?",
+  "showName": "Показывать моё имя",
+  "showNameHint": "По умолчанию выключено. Показывается только имя.",
+  "formats": {
+    "story": "Сторис",
+    "square": "Квадрат",
+    "telegram": "Telegram"
+  },
+  "copyLink": "Скопировать ссылку",
+  "linkCopied": "Ссылка скопирована",
+  "download": "Скачать картинку",
+  "shareTelegram": "Поделиться в Telegram"
+}

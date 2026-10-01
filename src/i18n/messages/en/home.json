@@ -1,0 +1,26 @@
+{
+  "title": "Today",
+  "mainAction": {
+    "title": "Today’s main action",
+    "done": "Done",
+    "skip": "Not today"
+  },
+  "optional": {
+    "title": "Optional actions"
+  },
+  "progress": {
+    "title": "Your progress",
+    "currentLevel": "Current level",
+    "completed": "{count, plural, one {# action completed} other {# actions completed}}"
+  },
+  "nextAssessment": {
+    "title": "Next assessment",
+    "available": "Available now",
+    "inDays": "{days, plural, one {Available in # day} other {Available in # days}}"
+  },
+  "empty": {
+    "title": "Start with your level",
+    "text": "Take the assessment and get a personal plan.",
+    "cta": "Find my level"
+  }
+}

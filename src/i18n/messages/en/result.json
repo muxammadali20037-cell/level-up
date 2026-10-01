@@ -1,0 +1,32 @@
+{
+  "title": "Your result",
+  "sections": {
+    "whereYouAre": "Where are you?",
+    "strongest": "Your strongest side",
+    "weakest": "Your weakest side",
+    "bottleneck": "Main blocker",
+    "nextLevel": "Next level",
+    "missing": "What’s missing for the next level?",
+    "doNow": "What to do now",
+    "dontNow": "What not to do yet",
+    "plan7": "7-day plan",
+    "roadmap30": "30-day roadmap",
+    "why": "Why this?",
+    "share": "Share your result"
+  },
+  "confidence": {
+    "label": "Confidence",
+    "high": "High Confidence",
+    "medium": "Medium Confidence",
+    "low": "Low Confidence",
+    "note": "This is an initial assessment. Your Level {level} result has {confidence}. A real practical task can make it more accurate."
+  },
+  "levelRange": "Level {from}–{to}",
+  "assessed": "ASSESSED",
+  "verified": "VERIFIED",
+  "score": "{score}/100",
+  "notMeasured": "Not measured directly",
+  "day": "Day {day}",
+  "week": "Week {week}",
+  "retest": "Retake the test"
+}

@@ -1,0 +1,14 @@
+{
+  "notFound": {
+    "title": "Sahifa topilmadi",
+    "text": "Havola eskirgan yoki unda xato boʻlishi mumkin.",
+    "home": "Bosh sahifaga qaytish"
+  },
+  "generic": {
+    "title": "Nimadir xato ketdi",
+    "text": "Qayta urinib koʻring. Agar yana takrorlansa, birozdan soʻng qayting.",
+    "retry": "Qayta urinish"
+  },
+  "rateLimited": "Soʻrovlar juda koʻp. Biroz kuting.",
+  "sessionExpired": "Sessiya muddati tugadi. Sahifani yangilang."
+}

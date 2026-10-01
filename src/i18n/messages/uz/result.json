@@ -1,0 +1,32 @@
+{
+  "title": "Sizning natijangiz",
+  "sections": {
+    "whereYouAre": "Qayerdasiz?",
+    "strongest": "Eng kuchli tomoningiz",
+    "weakest": "Eng zaif tomoningiz",
+    "bottleneck": "Asosiy toʻsiq",
+    "nextLevel": "Keyingi level",
+    "missing": "Keyingi level uchun nima yetishmayapti?",
+    "doNow": "Hozir nima qiling?",
+    "dontNow": "Hozir nima qilmang?",
+    "plan7": "7 kunlik reja",
+    "roadmap30": "30 kunlik yoʻl xaritasi",
+    "why": "Nega aynan bu?",
+    "share": "Natijani ulashish"
+  },
+  "confidence": {
+    "label": "Aniqlik darajasi",
+    "high": "High Confidence",
+    "medium": "Medium Confidence",
+    "low": "Low Confidence",
+    "note": "Bu dastlabki baholash. Level {level} natijangiz {confidence}. Real amaliy topshiriq orqali aniqlikni oshirish mumkin."
+  },
+  "levelRange": "Level {from}–{to}",
+  "assessed": "ASSESSED",
+  "verified": "VERIFIED",
+  "score": "{score}/100",
+  "notMeasured": "Bevosita oʻlchanmagan",
+  "day": "{day}-kun",
+  "week": "{week}-hafta",
+  "retest": "Testni qayta topshirish"
+}

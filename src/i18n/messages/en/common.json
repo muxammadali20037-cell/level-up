@@ -1,0 +1,71 @@
+{
+  "brand": "LEVEL",
+  "tagline": "Know where you are. Know what’s next. Prove your growth.",
+  "taglineParts": {
+    "where": "Know where you are.",
+    "next": "Know what’s next.",
+    "prove": "Prove your growth."
+  },
+  "nav": {
+    "home": "Home",
+    "assessment": "Assessment",
+    "results": "Results",
+    "roadmap": "Roadmap",
+    "profile": "Profile",
+    "skipToContent": "Skip to content"
+  },
+  "buttons": {
+    "start": "Start",
+    "continue": "Continue",
+    "next": "Next",
+    "back": "Back",
+    "cancel": "Cancel",
+    "close": "Close",
+    "retry": "Try again",
+    "save": "Save",
+    "share": "Share",
+    "copy": "Copy",
+    "copied": "Copied",
+    "done": "Done",
+    "skip": "Skip",
+    "confirm": "Confirm",
+    "goHome": "Go to home page"
+  },
+  "languages": {
+    "label": "Language",
+    "uz": "Oʻzbekcha",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "status": {
+    "loading": "Loading…",
+    "saving": "Saving…",
+    "error": "Something went wrong.",
+    "offline": "No connection. Check your internet and try again."
+  },
+  "disclaimer": {
+    "educational": "Educational assessment. Not a professional certification.",
+    "dignity": "A level reflects competency in a field — not a person’s worth or intelligence."
+  },
+  "noData": "Not enough reliable information.",
+  "sample": "Sample",
+  "levelLabel": "LEVEL {level}",
+  "levels": {
+    "1": "Starter",
+    "2": "Beginner",
+    "3": "Developing",
+    "4": "Practitioner",
+    "5": "Professional",
+    "6": "Advanced",
+    "7": "Expert",
+    "8": "Leader",
+    "9": "Master"
+  },
+  "minutes": "{count} min",
+  "footer": {
+    "label": "Policies and help",
+    "privacy": "Privacy policy",
+    "terms": "Terms of use",
+    "help": "Help"
+  }
+}

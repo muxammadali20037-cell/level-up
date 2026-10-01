@@ -1,0 +1,22 @@
+{
+  "title": "Payment",
+  "chooseMethod": "Choose a payment method",
+  "methods": {
+    "click": "Click",
+    "payme": "Payme",
+    "telegram_stars": "Telegram Stars"
+  },
+  "amount": "Amount",
+  "pay": "Pay {price}",
+  "processing": "Waiting for payment confirmation…",
+  "pending": "The payment is being processed. This can take up to a minute.",
+  "success": {
+    "title": "Payment successful",
+    "text": "Your full result is unlocked."
+  },
+  "failed": {
+    "title": "Payment didn’t go through",
+    "text": "Please try again or choose another method."
+  },
+  "toResult": "Open my result"
+}

@@ -1,0 +1,71 @@
+{
+  "brand": "LEVEL",
+  "tagline": "Qayerdaligingizni biling. Keyingi qadamni biling. Oʻsishingizni isbotlang.",
+  "taglineParts": {
+    "where": "Qayerdaligingizni biling.",
+    "next": "Keyingi qadamni biling.",
+    "prove": "Oʻsishingizni isbotlang."
+  },
+  "nav": {
+    "home": "Bosh sahifa",
+    "assessment": "Test",
+    "results": "Natijalar",
+    "roadmap": "Yoʻl xaritasi",
+    "profile": "Profil",
+    "skipToContent": "Asosiy qismga oʻtish"
+  },
+  "buttons": {
+    "start": "Boshlash",
+    "continue": "Davom etish",
+    "next": "Keyingisi",
+    "back": "Orqaga",
+    "cancel": "Bekor qilish",
+    "close": "Yopish",
+    "retry": "Qayta urinish",
+    "save": "Saqlash",
+    "share": "Ulashish",
+    "copy": "Nusxalash",
+    "copied": "Nusxalandi",
+    "done": "Bajarildi",
+    "skip": "Oʻtkazib yuborish",
+    "confirm": "Tasdiqlash",
+    "goHome": "Bosh sahifaga qaytish"
+  },
+  "languages": {
+    "label": "Til",
+    "uz": "Oʻzbekcha",
+    "ru": "Русский",
+    "en": "English"
+  },
+  "status": {
+    "loading": "Yuklanmoqda…",
+    "saving": "Saqlanmoqda…",
+    "error": "Nimadir xato ketdi.",
+    "offline": "Internet aloqasi yoʻq. Ulanishni tekshirib, qayta urinib koʻring."
+  },
+  "disclaimer": {
+    "educational": "Taʼlimiy baholash. Professional sertifikat emas.",
+    "dignity": "Level — bu sohadagi kompetensiya darajasi, inson qadri yoki intellekt emas."
+  },
+  "noData": "Yetarli ishonchli maʼlumot mavjud emas.",
+  "sample": "Namuna",
+  "levelLabel": "LEVEL {level}",
+  "levels": {
+    "1": "Ilk qadam",
+    "2": "Boshlovchi",
+    "3": "Rivojlanayotgan",
+    "4": "Amaliyotchi",
+    "5": "Professional",
+    "6": "Ilgʻor",
+    "7": "Ekspert",
+    "8": "Yetakchi",
+    "9": "Master"
+  },
+  "minutes": "{count} daqiqa",
+  "footer": {
+    "label": "Hujjatlar va yordam",
+    "privacy": "Maxfiylik siyosati",
+    "terms": "Foydalanish shartlari",
+    "help": "Yordam"
+  }
+}

@@ -1,0 +1,17 @@
+{
+  "title": "Share your result",
+  "defaultText": "I took the {profession} LEVEL test. My result: LEVEL {level}. What’s yours?",
+  "cta": "CHECK YOUR LEVEL",
+  "headline": "What LEVEL are you?",
+  "showName": "Show my name",
+  "showNameHint": "Off by default. Only your first name is shown.",
+  "formats": {
+    "story": "Story",
+    "square": "Square",
+    "telegram": "Telegram"
+  },
+  "copyLink": "Copy link",
+  "linkCopied": "Link copied",
+  "download": "Download image",
+  "shareTelegram": "Share in Telegram"
+}

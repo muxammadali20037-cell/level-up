@@ -1,0 +1,19 @@
+{
+  "title": "Your result is ready.",
+  "subtitle": "Here is a preview. Unlock the full result to see your level and plan.",
+  "strongest": "Strength",
+  "mainProblem": "Main blocker",
+  "levelLocked": "LEVEL LOCKED",
+  "levelLockedHint": "Your level and the path to the next one are in the full result.",
+  "skillsLocked": "Skill breakdown locked",
+  "roadmapLocked": "Roadmap locked",
+  "includes": {
+    "title": "The full result includes",
+    "level": "Your level and confidence",
+    "skills": "Score for every skill",
+    "bottleneck": "Your main blocker and why",
+    "plan": "A 7-day plan and a 30-day roadmap"
+  },
+  "cta": "Unlock the full result for {price}",
+  "secure": "One-time payment. No subscription."
+}

@@ -1,0 +1,18 @@
+{
+  "title": "Invite friends",
+  "text": "When friends take the test via your link, you unlock extra features.",
+  "yourLink": "Your link",
+  "copy": "Copy link",
+  "copied": "Link copied",
+  "stats": {
+    "invited": "Invited",
+    "completed": "Completed",
+    "paid": "Unlocked"
+  },
+  "rewards": {
+    "title": "Rewards",
+    "deepAnalysis": "Deep analysis",
+    "verification": "Practical verification attempt",
+    "progress": "{count} of {total}"
+  }
+}

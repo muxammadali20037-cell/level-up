@@ -1,0 +1,59 @@
+{
+  "meta": {
+    "title": "LEVEL — oʻz sohangizda qaysi darajadasiz?",
+    "description": "3–5 daqiqalik aqlli test. Levelingizni, kuchli va zaif tomonlaringizni hamda keyingi darajaga chiqish yoʻlini bilib oling."
+  },
+  "hero": {
+    "eyebrow": "Aqlli test · 7–15 savol",
+    "titleA": "Sen oʻz sohangda qaysi LEVELdasan?",
+    "subA": "3 daqiqada aniqlang. Kuchli tomonlaringizni biling. Keyingi darajaga chiqish yoʻlini oling.",
+    "priceNote": "Test va qisqa natija bepul · Toʻliq natija — {price}",
+    "titleB": "Oʻz sohangizda qaysi LEVELda ekaningizni bilib oling.",
+    "subB": "3–5 daqiqalik aqlli test. Kuchli va zaif tomonlaringiz. Keyingi darajaga chiqish yoʻli."
+  },
+  "cta": "LEVELIMNI ANIQLASH",
+  "preview": {
+    "label": "Natija namunasi",
+    "profession": "Tadbirkor",
+    "strongest": "Kuchli tomon",
+    "bottleneck": "Asosiy toʻsiq",
+    "nextLevel": "Keyingi level",
+    "confidence": "Medium Confidence",
+    "caption": "Tasviriy misol. Sizning natijangiz javoblaringiz asosida tuziladi.",
+    "skills": {
+      "sales": "Sotuv",
+      "marketing": "Marketing",
+      "finance": "Moliya",
+      "team": "Jamoa boshqaruvi",
+      "processes": "Jarayonlar"
+    }
+  },
+  "how": {
+    "title": "Qanday ishlaydi?",
+    "steps": {
+      "1": {
+        "title": "Sohangizni tanlang",
+        "text": "Kasb va yoʻnalish — ikki bosishda. Savollar javoblaringizga moslashadi."
+      },
+      "2": {
+        "title": "LEVELingizni biling",
+        "text": "1 dan 9 gacha shkalada: kuchli tomoningiz va asosiy toʻsiq."
+      },
+      "3": {
+        "title": "Keyingi levelga reja oling",
+        "text": "Hozir nima qilish, nimani hali qilmaslik hamda 7 va 30 kunlik reja."
+      }
+    }
+  },
+  "trust": {
+    "items": {
+      "noSignup": "Roʻyxatdan oʻtish shart emas",
+      "educational": "Taʼlimiy baholash, sertifikat emas",
+      "honest": "Aniqlik darajasi ochiq koʻrsatiladi"
+    }
+  },
+  "final": {
+    "title": "Qayerda turganingizni koʻrishga tayyormisiz?",
+    "text": "Bir necha daqiqa vaqt oladi. Natija — sizniki."
+  }
+}

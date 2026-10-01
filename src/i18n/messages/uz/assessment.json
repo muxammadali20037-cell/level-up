@@ -1,0 +1,23 @@
+{
+  "progress": "{current} / {total}",
+  "progressLabel": "{total} ta savoldan {current}-savol",
+  "hint": "Amalda qanday harakat qilishingizga eng yaqin javobni tanlang.",
+  "selectAnswer": "Javobni tanlang",
+  "next": "Keyingisi",
+  "finish": "Natijani koʻrish",
+  "loadingNext": "Keyingi savol tanlanmoqda…",
+  "resume": {
+    "title": "Toʻxtagan joyingizdan davom etasizmi?",
+    "text": "Javoblaringiz saqlangan.",
+    "continue": "Davom etish",
+    "restart": "Qaytadan boshlash"
+  },
+  "exit": {
+    "button": "Chiqish",
+    "title": "Testdan chiqasizmi?",
+    "text": "Jarayon saqlanadi — keyinroq davom ettirishingiz mumkin.",
+    "confirm": "Chiqish",
+    "cancel": "Davom etish"
+  },
+  "keyboardHint": "Javobni tanlash uchun Probel yoki Enter tugmasini bosing."
+}

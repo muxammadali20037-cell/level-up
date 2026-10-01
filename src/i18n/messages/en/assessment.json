@@ -1,0 +1,23 @@
+{
+  "progress": "{current} / {total}",
+  "progressLabel": "Question {current} of {total}",
+  "hint": "Choose the option closest to what you would actually do.",
+  "selectAnswer": "Select an answer",
+  "next": "Next",
+  "finish": "See result",
+  "loadingNext": "Picking the next question…",
+  "resume": {
+    "title": "Continue where you left off?",
+    "text": "Your answers are saved.",
+    "continue": "Continue",
+    "restart": "Start over"
+  },
+  "exit": {
+    "button": "Exit",
+    "title": "Exit the test?",
+    "text": "Your progress is saved — you can continue later.",
+    "confirm": "Exit",
+    "cancel": "Keep going"
+  },
+  "keyboardHint": "Press Space or Enter to choose an answer."
+}

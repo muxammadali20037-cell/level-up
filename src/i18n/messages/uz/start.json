@@ -1,0 +1,24 @@
+{
+  "meta": {
+    "title": "Sohangizni tanlang"
+  },
+  "language": {
+    "title": "Tilni tanlang",
+    "subtitle": "Uni istalgan vaqtda oʻzgartirishingiz mumkin."
+  },
+  "profession": {
+    "title": "Qaysi sohada oʻz levelingizni bilmoqchisiz?",
+    "subtitle": "Qiladigan yoki qilmoqchi boʻlgan ishingizga eng yaqin sohani tanlang.",
+    "search": "Kasblarni qidirish"
+  },
+  "specialization": {
+    "title": "Yoʻnalishingizni tanlang",
+    "subtitle": "Savollar shunga moslashtiriladi.",
+    "general": "Hali aniq emas — umumiy"
+  },
+  "comingSoon": {
+    "title": "Soha tanlash — keyingi bosqichda",
+    "text": "Bu qadam tayyorlanmoqda. Tez orada shu yerda sohangizni tanlab, testni boshlaysiz.",
+    "back": "Bosh sahifaga qaytish"
+  }
+}

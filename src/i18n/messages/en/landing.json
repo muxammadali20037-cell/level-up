@@ -1,0 +1,59 @@
+{
+  "meta": {
+    "title": "LEVEL — what level are you at in your field?",
+    "description": "A smart 3–5 minute assessment. Find your level, your strengths and weak spots, and a clear path to the next level."
+  },
+  "hero": {
+    "eyebrow": "Adaptive assessment · 7–15 questions",
+    "titleA": "What LEVEL are you at in your field?",
+    "subA": "Find out in 3 minutes. Know your strengths. Get your path to the next level.",
+    "priceNote": "Test and short result are free · Full result: {price}",
+    "titleB": "Find out which LEVEL you’re at in your field.",
+    "subB": "A smart 3–5 minute test. Your strengths and weak spots. A path to the next level."
+  },
+  "cta": "FIND MY LEVEL",
+  "preview": {
+    "label": "Sample result",
+    "profession": "Entrepreneur",
+    "strongest": "Strongest",
+    "bottleneck": "Main blocker",
+    "nextLevel": "Next level",
+    "confidence": "Medium Confidence",
+    "caption": "Illustrative example. Your result will be built from your answers.",
+    "skills": {
+      "sales": "Sales",
+      "marketing": "Marketing",
+      "finance": "Finance",
+      "team": "Team management",
+      "processes": "Processes"
+    }
+  },
+  "how": {
+    "title": "How it works",
+    "steps": {
+      "1": {
+        "title": "Choose your field",
+        "text": "Profession and specialization in two taps. Questions adapt to your answers."
+      },
+      "2": {
+        "title": "See your LEVEL",
+        "text": "On a scale from 1 to 9, with your strongest skill and main blocker."
+      },
+      "3": {
+        "title": "Get a plan for the next level",
+        "text": "What to do now, what not to do yet, and a plan for 7 and 30 days."
+      }
+    }
+  },
+  "trust": {
+    "items": {
+      "noSignup": "No sign-up needed",
+      "educational": "Educational assessment, not a certificate",
+      "honest": "Confidence shown openly"
+    }
+  },
+  "final": {
+    "title": "Ready to see where you stand?",
+    "text": "It takes a few minutes. The result is yours."
+  }
+}

@@ -1,0 +1,251 @@
+@import "tailwindcss";
+
+/*
+ * LEVEL design tokens. Components only use semantic tokens (bg-background, text-primary, …),
+ * never raw colors, so light/dark and the Telegram theme hook work everywhere.
+ *
+ * Mode resolution:
+ *  1. :root                         → light
+ *  2. prefers-color-scheme: dark    → dark (unless Telegram forces light)
+ *  3. [data-telegram-theme=light|dark] on <html> → Telegram's colorScheme wins over the OS.
+ *     The Telegram boot script / provider additionally set --background/--foreground/--primary/… inline
+ *     from themeParams, but only colors that stay readable (src/lib/telegram/theme.ts).
+ * --brand is never overridden by Telegram: the logo keeps LEVEL indigo in every host.
+ */
+:root {
+  color-scheme: light;
+  --radius: 1rem;
+
+  --background: oklch(0.985 0.004 270);
+  --foreground: oklch(0.205 0.025 270);
+  --card: oklch(1 0 0);
+  --card-foreground: var(--foreground);
+  --muted: oklch(0.962 0.007 270);
+  --muted-foreground: oklch(0.47 0.022 270);
+  --primary: oklch(0.47 0.2 272);
+  --primary-foreground: oklch(0.985 0.005 270);
+  --brand: oklch(0.47 0.2 272);
+  --accent: oklch(0.8 0.13 82);
+  --accent-foreground: oklch(0.3 0.06 65);
+  --border: oklch(0.915 0.009 270);
+  /* ≥ 3:1 on card/background: radio circles, unchecked switch tracks. */
+  --control-border: oklch(0.62 0.02 270);
+  --ring: oklch(0.55 0.2 272);
+  --success: oklch(0.52 0.12 160);
+  --success-foreground: oklch(0.46 0.11 160);
+  --warning: oklch(0.56 0.13 55);
+  --warning-foreground: oklch(0.47 0.12 55);
+  --danger: oklch(0.55 0.2 25);
+  --danger-foreground: oklch(0.985 0 0);
+  --overlay: oklch(0.15 0.02 270 / 0.55);
+  /* Final CTA panel: inverted ink slab in light mode, raised dark surface in dark mode. */
+  --cta-panel: var(--foreground);
+  --cta-panel-foreground: var(--background);
+  --cta-action: var(--background);
+  --cta-action-foreground: var(--foreground);
+
+  /* Level ramp: slate → cyan → azure → indigo → violet → gold (1 … 9). --level-ink is text on gold. */
+  --level-1: oklch(0.55 0.02 255);
+  --level-2: oklch(0.55 0.06 220);
+  --level-3: oklch(0.55 0.09 205);
+  --level-4: oklch(0.54 0.11 230);
+  --level-5: oklch(0.52 0.14 250);
+  --level-6: oklch(0.5 0.17 268);
+  --level-7: oklch(0.48 0.19 292);
+  --level-8: oklch(0.7 0.13 68);
+  --level-9: oklch(0.8 0.14 86);
+  --level-ink: oklch(0.25 0.05 60);
+
+  /* Safe areas: device insets, or Telegram (Bot API 8.0+) safe + content-safe insets. */
+  --safe-top: max(env(safe-area-inset-top, 0px), calc(var(--tg-safe-top, 0px) + var(--tg-content-safe-top, 0px)));
+  --safe-right: max(env(safe-area-inset-right, 0px), var(--tg-safe-right, 0px));
+  --safe-bottom: max(env(safe-area-inset-bottom, 0px), calc(var(--tg-safe-bottom, 0px) + var(--tg-content-safe-bottom, 0px)));
+  --safe-left: max(env(safe-area-inset-left, 0px), var(--tg-safe-left, 0px));
+}
+
+/* Dark tokens: keep the two blocks below identical. */
+@media (prefers-color-scheme: dark) {
+  :root:not([data-telegram-theme="light"]) {
+    color-scheme: dark;
+    --background: oklch(0.155 0.016 270);
+    --foreground: oklch(0.965 0.005 270);
+    --card: oklch(0.2 0.02 270);
+    --muted: oklch(0.245 0.022 270);
+    --muted-foreground: oklch(0.72 0.02 270);
+    --primary: oklch(0.72 0.14 276);
+    --primary-foreground: oklch(0.16 0.03 270);
+    --brand: oklch(0.72 0.14 276);
+    --accent: oklch(0.82 0.13 85);
+    --accent-foreground: oklch(0.25 0.05 65);
+    --border: oklch(0.3 0.022 270);
+    --control-border: oklch(0.55 0.02 270);
+    --ring: oklch(0.72 0.14 276);
+    --success: oklch(0.75 0.14 160);
+    --success-foreground: oklch(0.78 0.13 160);
+    --warning: oklch(0.8 0.14 70);
+    --warning-foreground: oklch(0.82 0.13 72);
+    --danger: oklch(0.7 0.18 25);
+    --danger-foreground: oklch(0.18 0.03 25);
+    --overlay: oklch(0.05 0.01 270 / 0.7);
+    --cta-panel: oklch(0.23 0.03 272);
+    --cta-panel-foreground: var(--foreground);
+    --cta-action: var(--primary);
+    --cta-action-foreground: var(--primary-foreground);
+  }
+}
+
+:root[data-telegram-theme="dark"] {
+  color-scheme: dark;
+  --background: oklch(0.155 0.016 270);
+  --foreground: oklch(0.965 0.005 270);
+  --card: oklch(0.2 0.02 270);
+  --muted: oklch(0.245 0.022 270);
+  --muted-foreground: oklch(0.72 0.02 270);
+  --primary: oklch(0.72 0.14 276);
+  --primary-foreground: oklch(0.16 0.03 270);
+  --brand: oklch(0.72 0.14 276);
+  --accent: oklch(0.82 0.13 85);
+  --accent-foreground: oklch(0.25 0.05 65);
+  --border: oklch(0.3 0.022 270);
+  --control-border: oklch(0.55 0.02 270);
+  --ring: oklch(0.72 0.14 276);
+  --success: oklch(0.75 0.14 160);
+  --success-foreground: oklch(0.78 0.13 160);
+  --warning: oklch(0.8 0.14 70);
+  --warning-foreground: oklch(0.82 0.13 72);
+  --danger: oklch(0.7 0.18 25);
+  --danger-foreground: oklch(0.18 0.03 25);
+  --overlay: oklch(0.05 0.01 270 / 0.7);
+  --cta-panel: oklch(0.23 0.03 272);
+  --cta-panel-foreground: var(--foreground);
+  --cta-action: var(--primary);
+  --cta-action-foreground: var(--primary-foreground);
+}
+
+/* `tma:hidden` hides web-only chrome inside the Telegram Mini App (data-tma is set before first paint). */
+@custom-variant tma (&:where([data-tma] *));
+
+@theme inline {
+  --font-sans:
+    ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial,
+    "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji";
+
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-brand: var(--brand);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-border: var(--border);
+  --color-control-border: var(--control-border);
+  --color-ring: var(--ring);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-danger: var(--danger);
+  --color-danger-foreground: var(--danger-foreground);
+  --color-overlay: var(--overlay);
+  --color-cta-panel: var(--cta-panel);
+  --color-cta-panel-foreground: var(--cta-panel-foreground);
+  --color-cta-action: var(--cta-action);
+  --color-cta-action-foreground: var(--cta-action-foreground);
+  --color-level-1: var(--level-1);
+  --color-level-2: var(--level-2);
+  --color-level-3: var(--level-3);
+  --color-level-4: var(--level-4);
+  --color-level-5: var(--level-5);
+  --color-level-6: var(--level-6);
+  --color-level-7: var(--level-7);
+  --color-level-8: var(--level-8);
+  --color-level-9: var(--level-9);
+  --color-level-ink: var(--level-ink);
+
+  --radius-card: calc(var(--radius) * 1.5);
+}
+
+/* Mobile flows (assessment, result, payment…) are capped at 480px; the landing widens on desktop. */
+@utility container-flow {
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+}
+
+@utility container-wide {
+  width: 100%;
+  max-width: 30rem;
+  margin-inline: auto;
+  padding-inline: 1rem;
+  @media (width >= 48rem) {
+    max-width: 72rem;
+    padding-inline: 2rem;
+  }
+}
+
+/*
+ * Focus indicator: a solid 2px outline at full opacity with a 2px gap that shows the local surface,
+ * so it reaches ≥ 3:1 against any surface (WCAG 1.4.11 / 2.4.13) and survives forced-colors mode.
+ * Inverted surfaces (final CTA panel) set --focus-ring for their descendants.
+ */
+@utility focus-ring {
+  outline: 2px solid transparent;
+  outline-offset: 2px;
+  &:focus-visible {
+    outline-color: var(--focus-ring, var(--ring));
+  }
+}
+
+@layer base {
+  *,
+  ::before,
+  ::after {
+    border-color: var(--border);
+  }
+
+  html {
+    -webkit-text-size-adjust: 100%;
+    -webkit-tap-highlight-color: transparent;
+    text-rendering: optimizeLegibility;
+  }
+
+  body {
+    min-height: 100dvh;
+    background-color: var(--background);
+    color: var(--foreground);
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    /*
+     * Long words wrap instead of overflowing at large OS text sizes (200%). `anywhere` (unlike break-word)
+     * also lowers min-content, so flex/grid items can shrink; words only break when they can't fit a line.
+     */
+    overflow-wrap: anywhere;
+    padding: var(--safe-top) var(--safe-right) var(--safe-bottom) var(--safe-left);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus-ring, var(--ring));
+    outline-offset: 2px;
+  }
+
+  ::selection {
+    background-color: color-mix(in oklab, var(--primary) 22%, transparent);
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    ::before,
+    ::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+  }
+}

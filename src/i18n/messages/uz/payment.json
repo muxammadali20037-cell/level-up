@@ -1,0 +1,22 @@
+{
+  "title": "Toʻlov",
+  "chooseMethod": "Toʻlov usulini tanlang",
+  "methods": {
+    "click": "Click",
+    "payme": "Payme",
+    "telegram_stars": "Telegram Stars"
+  },
+  "amount": "Summa",
+  "pay": "{price} toʻlash",
+  "processing": "Toʻlov tasdigʻi kutilmoqda…",
+  "pending": "Toʻlov qayta ishlanmoqda. Bu bir daqiqagacha vaqt olishi mumkin.",
+  "success": {
+    "title": "Toʻlov muvaffaqiyatli",
+    "text": "Toʻliq natijangiz ochildi."
+  },
+  "failed": {
+    "title": "Toʻlov amalga oshmadi",
+    "text": "Qayta urinib koʻring yoki boshqa usulni tanlang."
+  },
+  "toResult": "Natijamni ochish"
+}

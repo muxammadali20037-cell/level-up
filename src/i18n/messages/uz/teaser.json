@@ -1,0 +1,19 @@
+{
+  "title": "Natijangiz tayyor.",
+  "subtitle": "Bu qisqa koʻrinish. Levelingiz va rejangizni koʻrish uchun toʻliq natijani oching.",
+  "strongest": "Kuchli tomon",
+  "mainProblem": "Asosiy toʻsiq",
+  "levelLocked": "LEVEL LOCKED",
+  "levelLockedHint": "Levelingiz va keyingi darajaga yoʻl — toʻliq natijada.",
+  "skillsLocked": "Koʻnikmalar tahlili yopiq",
+  "roadmapLocked": "Yoʻl xaritasi yopiq",
+  "includes": {
+    "title": "Toʻliq natijada",
+    "level": "Levelingiz va aniqlik darajasi",
+    "skills": "Har bir koʻnikma boʻyicha ball",
+    "bottleneck": "Asosiy toʻsiq va uning sababi",
+    "plan": "7 kunlik reja va 30 kunlik yoʻl xaritasi"
+  },
+  "cta": "{price}ga toʻliq natijani ochish",
+  "secure": "Bir martalik toʻlov. Obuna emas."
+}

@@ -1,0 +1,34 @@
+{
+  "title": "A bit about you",
+  "subtitle": "This makes the result more accurate.",
+  "progress": "Step {current} of {total}",
+  "experience": {
+    "question": "How much experience do you have in this field?",
+    "options": {
+      "0": "None yet",
+      "lt1": "Less than 1 year",
+      "1to3": "1–3 years",
+      "3to5": "3–5 years",
+      "5plus": "5+ years"
+    }
+  },
+  "working": {
+    "question": "Are you working in this field now?",
+    "options": {
+      "yes": "Yes",
+      "no": "No",
+      "learning": "I’m learning"
+    }
+  },
+  "goal": {
+    "question": "What is your main goal?",
+    "options": {
+      "start": "Get started",
+      "find_job": "Find a job",
+      "professional": "Become a professional",
+      "increase_income": "Increase my income",
+      "lead": "Become a leader",
+      "expert": "Become an expert"
+    }
+  }
+}

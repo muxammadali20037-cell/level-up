@@ -1,0 +1,14 @@
+{
+  "notFound": {
+    "title": "Page not found",
+    "text": "The link may be outdated or contain a typo.",
+    "home": "Go to home page"
+  },
+  "generic": {
+    "title": "Something went wrong",
+    "text": "Please try again. If it happens again, come back a little later.",
+    "retry": "Try again"
+  },
+  "rateLimited": "Too many requests. Please wait a moment.",
+  "sessionExpired": "Your session has expired. Please refresh the page."
+}

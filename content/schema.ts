@@ -190,7 +190,7 @@ export const professionContentSchema = z.object({
       targetQuestions: z.number().int().min(5).max(30),
       targetSe: z.number().positive(),
       retestCooldownDays: z.number().int().min(0),
-      experienceCaps: z.record(experienceBandSchema, level),
+      experienceCaps: z.partialRecord(experienceBandSchema, level),
       maxSelfReportItems: z.number().int().min(0).max(4),
       minScenarioLikeItems: z.number().int().min(0).max(8),
     })

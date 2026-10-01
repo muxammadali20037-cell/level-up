@@ -1,0 +1,18 @@
+{
+  "title": "Doʻstlarni taklif qiling",
+  "text": "Doʻstlaringiz havolangiz orqali test topshirsa, qoʻshimcha imkoniyatlar ochiladi.",
+  "yourLink": "Sizning havolangiz",
+  "copy": "Havolani nusxalash",
+  "copied": "Havola nusxalandi",
+  "stats": {
+    "invited": "Taklif qilingan",
+    "completed": "Testni tugatgan",
+    "paid": "Natijani ochgan"
+  },
+  "rewards": {
+    "title": "Mukofotlar",
+    "deepAnalysis": "Chuqur tahlil",
+    "verification": "Amaliy tekshiruv urinishi",
+    "progress": "{count} / {total}"
+  }
+}

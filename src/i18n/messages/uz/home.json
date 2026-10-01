@@ -1,0 +1,26 @@
+{
+  "title": "Bugun",
+  "mainAction": {
+    "title": "Bugungi asosiy vazifa",
+    "done": "Bajarildi",
+    "skip": "Bugun emas"
+  },
+  "optional": {
+    "title": "Qoʻshimcha vazifalar"
+  },
+  "progress": {
+    "title": "Rivojlanishingiz",
+    "currentLevel": "Joriy level",
+    "completed": "{count} ta vazifa bajarildi"
+  },
+  "nextAssessment": {
+    "title": "Keyingi baholash",
+    "available": "Hozir mavjud",
+    "inDays": "{days} kundan keyin mavjud"
+  },
+  "empty": {
+    "title": "Levelingizdan boshlang",
+    "text": "Testdan oʻting va shaxsiy reja oling.",
+    "cta": "Levelimni aniqlash"
+  }
+}
