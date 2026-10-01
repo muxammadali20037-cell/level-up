@@ -1,0 +1,187 @@
+-- LEVEL schema 0800: Growth OS — goals, action library, roadmaps, do-not rules, skill/level history.
+
+create table public.goals (
+  id                   uuid primary key default gen_random_uuid(),
+  user_id              uuid not null references public.users (id) on delete cascade,
+  profession_id        uuid not null references public.professions (id) on delete restrict,
+  goal_type            text not null check (goal_type in (
+                         'start', 'find_job', 'professional', 'increase_income', 'lead', 'expert', 'first_job',
+                         'manager', 'build_business', 'scale_business', 'change_career')),
+  target_level         smallint check (target_level between 1 and 9),
+  time_per_day_minutes integer check (time_per_day_minutes between 5 and 480),
+  budget               text check (budget in ('free', 'low', 'medium', 'high')),
+  status               text not null default 'active' check (status in ('active', 'achieved', 'abandoned', 'archived')),
+  created_at           timestamptz not null default now(),
+  updated_at           timestamptz not null default now()
+);
+comment on table public.goals is 'A user''s growth goal in a profession (goal type, target level, time and budget constraints).';
+create index goals_user_idx on public.goals (user_id, status);
+create index goals_profession_id_idx on public.goals (profession_id);
+create trigger set_updated_at before update on public.goals
+  for each row execute function public.set_updated_at();
+
+-- Action library (content-as-code), referenced by roadmap items.
+create table public.actions (
+  id               uuid primary key default gen_random_uuid(),
+  profession_id    uuid not null references public.professions (id) on delete cascade,
+  skill_id         uuid,
+  slug             text not null check (slug ~ '^[a-z][a-z0-9_]{1,63}$'),
+  title            jsonb not null check (public.is_i18n_nonempty(title)),
+  description      jsonb not null default '{}'::jsonb check (public.is_i18n(description)),
+  kind             text not null check (kind in ('learn', 'practice', 'apply', 'verify', 'reflect')),
+  phase            text not null check (phase in ('foundation', 'practice', 'application', 'verification')),
+  duration_minutes integer not null check (duration_minutes between 1 and 240),
+  min_level        smallint not null default 1 check (min_level between 1 and 9),
+  max_level        smallint not null default 9 check (max_level between 1 and 9),
+  budget           text not null default 'free' check (budget in ('free', 'low', 'medium', 'high')),
+  success_criteria jsonb check (public.is_i18n(success_criteria)),
+  why              jsonb check (public.is_i18n(why)),
+  resource_ids     uuid[] not null default '{}' check (array_position(resource_ids, null) is null),
+  source_ids       uuid[] not null default '{}' check (array_position(source_ids, null) is null),
+  status           text not null default 'active' check (status in ('draft', 'active', 'archived')),
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now(),
+  unique (profession_id, slug),
+  foreign key (skill_id, profession_id) references public.skills (id, profession_id) on delete cascade,
+  constraint actions_level_range check (min_level <= max_level)
+);
+comment on table public.actions is 'Action library: small learn/practice/apply/verify/reflect steps per skill and level range.';
+create index actions_skill_idx on public.actions (skill_id, profession_id) where skill_id is not null;
+create trigger set_updated_at before update on public.actions
+  for each row execute function public.set_updated_at();
+
+create table public.roadmaps (
+  id                uuid primary key default gen_random_uuid(),
+  user_id           uuid not null references public.users (id) on delete cascade,
+  goal_id           uuid references public.goals (id) on delete set null,
+  result_id         uuid references public.assessment_results (id) on delete set null,
+  profession_id     uuid not null references public.professions (id) on delete restrict,
+  from_level        smallint not null check (from_level between 1 and 9),
+  to_level          smallint not null check (to_level between 1 and 9),
+  status            text not null default 'proposed' check (status in ('proposed', 'active', 'completed', 'archived')),
+  pace_minutes      integer not null default 30 check (pace_minutes between 5 and 480),
+  generator         text not null default 'rules' check (generator in ('rules', 'ai')),
+  generator_version text not null check (length(generator_version) <= 64),
+  started_at        timestamptz,
+  completed_at      timestamptz,
+  created_at        timestamptz not null default now(),
+  updated_at        timestamptz not null default now(),
+  constraint roadmaps_levels check (to_level >= from_level)
+);
+comment on table public.roadmaps is '30-day roadmap from the current to the next level, generated by rules (optionally AI narrative).';
+create unique index roadmaps_one_active_per_profession on public.roadmaps (user_id, profession_id) where status = 'active';
+create index roadmaps_user_idx on public.roadmaps (user_id, status);
+create index roadmaps_goal_id_idx on public.roadmaps (goal_id) where goal_id is not null;
+create index roadmaps_result_id_idx on public.roadmaps (result_id) where result_id is not null;
+create index roadmaps_profession_id_idx on public.roadmaps (profession_id);
+create trigger set_updated_at before update on public.roadmaps
+  for each row execute function public.set_updated_at();
+
+create table public.roadmap_items (
+  id               uuid primary key default gen_random_uuid(),
+  roadmap_id       uuid not null references public.roadmaps (id) on delete cascade,
+  action_id        uuid references public.actions (id) on delete set null,
+  day_number       smallint check (day_number between 1 and 366),
+  week_number      smallint check (week_number between 1 and 53),
+  phase            text not null check (phase in ('foundation', 'practice', 'application', 'verification')),
+  skill_id         uuid references public.skills (id) on delete set null,
+  is_main          boolean not null default false,
+  title            jsonb not null check (public.is_i18n_nonempty(title)),
+  description      jsonb not null default '{}'::jsonb check (public.is_i18n(description)),
+  -- {reason, source_ids, evidence, limitation, confidence}: every recommendation explains itself.
+  why              jsonb not null default '{}'::jsonb check (jsonb_typeof(why) = 'object'),
+  duration_minutes integer check (duration_minutes between 1 and 480),
+  status           text not null default 'pending' check (status in ('pending', 'done', 'skipped')),
+  completed_at     timestamptz,
+  sort_order       integer not null default 0,
+  created_at       timestamptz not null default now(),
+  updated_at       timestamptz not null default now()
+);
+comment on table public.roadmap_items is 'Snapshotted roadmap steps (day/week, phase, why) with completion status.';
+create index roadmap_items_roadmap_idx on public.roadmap_items (roadmap_id, day_number, sort_order);
+create index roadmap_items_action_id_idx on public.roadmap_items (action_id) where action_id is not null;
+create index roadmap_items_skill_id_idx on public.roadmap_items (skill_id) where skill_id is not null;
+create trigger set_updated_at before update on public.roadmap_items
+  for each row execute function public.set_updated_at();
+
+create table public.action_results (
+  id              uuid primary key default gen_random_uuid(),
+  user_id         uuid not null references public.users (id) on delete cascade,
+  roadmap_item_id uuid references public.roadmap_items (id) on delete set null,
+  action_id       uuid references public.actions (id) on delete set null,
+  status          text not null check (status in ('done', 'skipped', 'partial')),
+  note            text check (length(note) <= 2000),
+  evidence        jsonb check (jsonb_typeof(evidence) = 'object'),
+  completed_at    timestamptz not null default now(),
+  created_at      timestamptz not null default now(),
+  updated_at      timestamptz not null default now()
+);
+comment on table public.action_results is 'User check-ins on actions (done/skipped/partial) with optional note and evidence.';
+create index action_results_user_idx on public.action_results (user_id, completed_at desc);
+create index action_results_roadmap_item_id_idx on public.action_results (roadmap_item_id) where roadmap_item_id is not null;
+create index action_results_action_id_idx on public.action_results (action_id) where action_id is not null;
+create trigger set_updated_at before update on public.action_results
+  for each row execute function public.set_updated_at();
+
+create table public.do_not_rules (
+  id            uuid primary key default gen_random_uuid(),
+  profession_id uuid not null references public.professions (id) on delete cascade,
+  skill_id      uuid,
+  slug          text not null check (slug ~ '^[a-z][a-z0-9_]{1,63}$'),
+  -- {max_level, min_level, weak_skills[], goal_types[]}
+  condition     jsonb not null default '{}'::jsonb check (jsonb_typeof(condition) = 'object'),
+  message       jsonb not null check (public.is_i18n_nonempty(message)),
+  reason        jsonb not null check (public.is_i18n_nonempty(reason)),
+  source_ids    uuid[] not null default '{}' check (array_position(source_ids, null) is null),
+  status        text not null default 'active' check (status in ('draft', 'active', 'archived')),
+  created_at    timestamptz not null default now(),
+  updated_at    timestamptz not null default now(),
+  unique (profession_id, slug),
+  foreign key (skill_id, profession_id) references public.skills (id, profession_id) on delete cascade
+);
+comment on table public.do_not_rules is '"Do not do now" rules with conditions and reasons, shown in reports and roadmaps.';
+create index do_not_rules_skill_idx on public.do_not_rules (skill_id, profession_id) where skill_id is not null;
+create trigger set_updated_at before update on public.do_not_rules
+  for each row execute function public.set_updated_at();
+
+create table public.user_skills (
+  user_id        uuid not null references public.users (id) on delete cascade,
+  skill_id       uuid not null references public.skills (id) on delete cascade,
+  assessed_score numeric(5, 2) check (assessed_score >= 0 and assessed_score <= 100),
+  verified_score numeric(5, 2) check (verified_score >= 0 and verified_score <= 100),
+  last_result_id uuid references public.assessment_results (id) on delete set null,
+  created_at     timestamptz not null default now(),
+  updated_at     timestamptz not null default now(),
+  primary key (user_id, skill_id)
+);
+comment on table public.user_skills is 'Latest assessed and verified score per user and skill (Growth OS state).';
+create index user_skills_skill_id_idx on public.user_skills (skill_id);
+create index user_skills_last_result_id_idx on public.user_skills (last_result_id) where last_result_id is not null;
+create trigger set_updated_at before update on public.user_skills
+  for each row execute function public.set_updated_at();
+
+create table public.skill_history (
+  id          uuid primary key default gen_random_uuid(),
+  user_id     uuid not null references public.users (id) on delete cascade,
+  skill_id    uuid not null references public.skills (id) on delete cascade,
+  score       numeric(5, 2) not null check (score >= 0 and score <= 100),
+  kind        text not null check (kind in ('assessed', 'verified')),
+  source_id   uuid, -- assessment_results.id or verification_attempts.id depending on kind
+  recorded_at timestamptz not null default now()
+);
+comment on table public.skill_history is 'Append-only time series of skill scores (assessed or verified) for progress charts.';
+create index skill_history_user_skill_idx on public.skill_history (user_id, skill_id, recorded_at);
+create index skill_history_skill_id_idx on public.skill_history (skill_id);
+
+create table public.level_history (
+  id            uuid primary key default gen_random_uuid(),
+  user_id       uuid not null references public.users (id) on delete cascade,
+  profession_id uuid not null references public.professions (id) on delete restrict,
+  level         smallint not null check (level between 1 and 9),
+  kind          text not null check (kind in ('assessed', 'verified')),
+  source_id     uuid, -- assessment_results.id or verification_attempts.id depending on kind
+  recorded_at   timestamptz not null default now()
+);
+comment on table public.level_history is 'Append-only time series of ASSESSED and VERIFIED levels per profession (level-up tracking).';
+create index level_history_user_idx on public.level_history (user_id, profession_id, recorded_at desc);
+create index level_history_profession_id_idx on public.level_history (profession_id);
