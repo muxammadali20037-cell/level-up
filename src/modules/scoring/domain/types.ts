@@ -14,12 +14,17 @@ export const SCORING_MODEL_VERSION = "irt3pl-eap-hier-v1";
 
 export interface ScoringSkill {
   readonly id: string;
-  /** Importance after specialization multipliers and normalization. */
+  /**
+   * Importance after specialization multipliers and normalization. For scoring this is the composite importance
+   * (skills.importance × specialization weight, `compositeImportance`), never goal-boosted; routing may pass
+   * goal-boosted weights (`routingImportance`) for its own ordering only.
+   */
   readonly importance: number;
 }
 
 export interface ScoringInput {
   readonly items: readonly AnsweredItem[];
+  /** Composite importance (`compositeImportance`): never goal-boosted, so the level depends only on answers. */
   readonly skills: readonly ScoringSkill[];
   /** Prior mean of general ability (from experience band). */
   readonly priorMean: number;
@@ -83,7 +88,7 @@ export interface LevelEvaluation {
 }
 
 export interface LevelAssignment {
-  /** Final assessed level after caps. */
+  /** Final assessed level after caps. Never a requiresVerification level (except a floor level marked so). */
   readonly level: number;
   /** Level before verification/experience caps. */
   readonly uncappedLevel: number;
@@ -98,7 +103,11 @@ export interface LevelAssignmentInput {
   readonly compositeSe: number;
   readonly skillScores: Readonly<Record<string, number>>;
   readonly experience: ExperienceBand;
-  /** Verified counts (verified scenarios / practical actions) — 0 for a fresh assessment. */
+  /**
+   * Verified counts (verified scenarios / practical actions) — 0 for a fresh assessment. They are compared with
+   * explicit verified_scenario / practical_action requirements only; they never lift the cap on
+   * requiresVerification levels (those are never ASSESSED, AC-F07-02; the VERIFIED level is computed separately).
+   */
   readonly verifiedScenarios: number;
   readonly practicalActions: number;
   /**
@@ -150,7 +159,10 @@ export interface ConfidenceInput {
   readonly seG: number;
   /** Share (0..1) of timed items answered faster than the speeding threshold. */
   readonly speedingRatio: number;
-  /** |mean self-report credit − mean other credit|, null when either group is empty. */
+  /**
+   * |mean self-report credit − mean credit the tested items predict for those self-report items| (model-based,
+   * see `computeSelfReportGap`); null when there is no self-report or no tested item.
+   */
   readonly selfReportGap: number | null;
   /** True when a level range is reported (composite within one SE of a boundary). */
   readonly nearBoundary: boolean;

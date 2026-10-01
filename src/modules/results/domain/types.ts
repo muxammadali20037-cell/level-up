@@ -87,10 +87,19 @@ export interface NextLevelRequirementStatus {
   readonly description: I18nText;
 }
 
+/** A cap that keeps level L+1 out of the ASSESSED level no matter how the scores improve (brief §7). */
+export type NextLevelBlocker = "experience" | "verification";
+
 export interface NextLevel {
   readonly number: number;
   readonly compositeGap: number;
   readonly requirements: readonly NextLevelRequirementStatus[];
+  /**
+   * Caps blocking L+1 (in this order): "experience" — above the experience-band cap; "verification" — a
+   * requires_verification level without a verified scenario. Empty when none. Optional only for backward
+   * compatibility; `buildNextLevel` always sets it.
+   */
+  readonly blockedBy?: readonly NextLevelBlocker[];
 }
 
 export interface Percentile {
