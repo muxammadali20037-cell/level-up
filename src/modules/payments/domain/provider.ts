@@ -17,6 +17,20 @@ export interface PaymentRecord {
   readonly createdAt: number;
   /** payments.provider_payment_id (write-once); null until captured. */
   readonly providerPaymentId?: string | null;
+  /** payments.expires_at as epoch ms; null/undefined = no expiry. */
+  readonly expiresAt?: number | null;
+}
+
+const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
+
+/** Provider order references (Click merchant_trans_id, Payme account.order_id, Stars payload) are payment UUIDs. */
+export function isPaymentRef(value: unknown): value is string {
+  return typeof value === "string" && UUID_RE.test(value);
+}
+
+/** True when the payment has an expiry and it has passed. */
+export function isExpired(payment: Pick<PaymentRecord, "expiresAt">, nowMs: number): boolean {
+  return payment.expiresAt !== null && payment.expiresAt !== undefined && payment.expiresAt <= nowMs;
 }
 
 /**
@@ -45,6 +59,13 @@ export interface ProviderTxnRecord {
   readonly performTime: number | null;
   readonly cancelTime: number | null;
   readonly reason: number | null;
+  /**
+   * Integer merchant reference (provider_transactions.merchant_ref, sequence provider_merchant_ref_seq; doc 08 P2),
+   * assigned by {@link PaymentStore.createProviderTxn}. Click uses it as merchant_prepare_id / merchant_confirm_id.
+   */
+  readonly merchantRef: number | null;
+  /** Provider-side creation time, epoch ms (provider_transactions.provider_time; Payme `params.time`, doc 08 P2). */
+  readonly providerTime: number | null;
   readonly raw: Readonly<Record<string, unknown>>;
 }
 
@@ -55,6 +76,7 @@ export interface NewProviderTxn {
   readonly state: TxnState;
   readonly amountMinor: number;
   readonly createTime: number;
+  readonly providerTime?: number | null;
   readonly raw?: Readonly<Record<string, unknown>>;
 }
 
@@ -97,6 +119,7 @@ export interface PaymentStore {
   getProviderTxn(provider: PaymentProviderKey, providerTxnId: string): Promise<ProviderTxnRecord | null>;
   /** The transaction of this payment/provider in state 1 (created), if any. */
   getActiveProviderTxnForPayment(paymentId: string, provider: PaymentProviderKey): Promise<ProviderTxnRecord | null>;
+  /** Inserts a txn and assigns {@link ProviderTxnRecord.merchantRef}. Throws on a duplicate (provider, providerTxnId). */
   createProviderTxn(input: NewProviderTxn): Promise<ProviderTxnRecord>;
   updateProviderTxn(id: string, patch: ProviderTxnPatch): Promise<ProviderTxnRecord>;
   /** created → pending; no-op when already pending. */
@@ -109,6 +132,11 @@ export interface PaymentStore {
   markRefunded(paymentId: string, reason: string): Promise<void>;
   /** Stores a provider callback; 'duplicate' when the (provider, eventType, providerEventId) was seen before. */
   recordEvent(input: PaymentEventInput): Promise<"new" | "duplicate">;
+  /**
+   * True when the payment's purchase target is already unlocked by ANOTHER payment or source (result_unlocks row not
+   * created by this payment). Pre-checks use it to refuse a capture that would double-charge (doc 08 §6.5).
+   */
+  isTargetUnlocked(paymentId: string): Promise<boolean>;
   /** Transactions whose createTime is within [fromMs, toMs] inclusive, ordered by createTime. */
   listTxnsBetween(provider: PaymentProviderKey, fromMs: number, toMs: number): Promise<ProviderTxnRecord[]>;
 }

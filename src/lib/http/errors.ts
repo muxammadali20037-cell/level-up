@@ -11,7 +11,12 @@ export const API_ERROR_STATUS = {
   conflict: 409,
   gone: 410,
   payload_too_large: 413,
+  unprocessable: 422,
   rate_limited: 429,
+  /** Telegram initData failed verification (bad/missing hash, malformed). Client: reopen the Mini App from the bot. */
+  telegram_auth_invalid: 401,
+  /** Telegram initData is older than the accepted window (24 h). */
+  telegram_auth_expired: 401,
   internal: 500,
   unavailable: 503,
 } as const;
@@ -52,6 +57,7 @@ export const notFound = make("not_found", "Not found");
 export const conflict = make("conflict", "Conflict");
 export const gone = make("gone", "Gone");
 export const payloadTooLarge = make("payload_too_large", "Request body too large");
+export const unprocessable = make("unprocessable", "Unprocessable request");
 export const internalError = make("internal", "Internal error");
 export const unavailable = make("unavailable", "Service unavailable");
 

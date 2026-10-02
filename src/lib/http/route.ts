@@ -9,22 +9,26 @@ import { errorResponse } from "./response";
  * Route Handler wrapper: request id, CSRF (same-origin) check for mutating methods, body size limit for
  * `parseJson`, and error mapping (ApiError → its status, ZodError → 400, anything else → 500 with a logged
  * request id and no stack in the response).
+ *
+ * Handlers never call `cookies()`/`headers()` from next/headers: they read `request.cookies`/`request.headers` and set
+ * cookies on the returned NextResponse, so they can be tested by calling the exported function with a NextRequest.
  */
-export const DEFAULT_MAX_BODY_BYTES = 32 * 1024;
+export const DEFAULT_MAX_BODY_BYTES = 16 * 1024;
 
 export interface RouteOptions {
   /** false only for provider webhooks (they are signature-verified instead). Default true. */
   csrf?: boolean;
-  /** Body size limit enforced by parseJson. Default 32 KB. */
+  /** Body size limit enforced by parseJson. Default 16 KB (01-architecture §5.1). */
   maxBodyBytes?: number;
 }
 
-export interface RouteContext<P> {
+/** Second argument of a wrapped handler (Next's `{ params }` plus the request id). */
+export interface HandlerContext<P> {
   params: Promise<P>;
   requestId: string;
 }
 
-export type RouteHandler<P> = (request: NextRequest, ctx: RouteContext<P>) => Promise<Response>;
+export type RouteHandler<P> = (request: NextRequest, ctx: HandlerContext<P>) => Promise<Response>;
 
 const MUTATING = new Set(["POST", "PUT", "PATCH", "DELETE"]);
 const bodyLimits = new WeakMap<Request, number>();
@@ -37,7 +41,11 @@ export function withRoute<P = {}>(handler: RouteHandler<P>, opts: RouteOptions =
       if (opts.csrf !== false && MUTATING.has(request.method)) assertSameOrigin(request);
       bodyLimits.set(request, opts.maxBodyBytes ?? DEFAULT_MAX_BODY_BYTES);
       const response = await handler(request, { params: context?.params ?? Promise.resolve({} as P), requestId });
-      response.headers.set(REQUEST_ID_HEADER, requestId);
+      try {
+        response.headers.set(REQUEST_ID_HEADER, requestId);
+      } catch {
+        // Immutable headers (e.g. Response.redirect): the id is still in the logs.
+      }
       return response;
     } catch (error) {
       return toErrorResponse(error, request, requestId);
@@ -83,22 +91,28 @@ function appHost(): string | null {
   }
 }
 
+function hostOf(url: string | null): string | null {
+  if (!url || url === "null") return null;
+  try {
+    return new URL(url).host.toLowerCase() || null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Cookie-authenticated mutations must come from our own origin. Bearer requests are exempt (a cross-site page
- * cannot attach an Authorization header without a CORS preflight we never allow). Requests with neither Origin
- * nor Sec-Fetch-Site are non-browser clients, which cannot ride a victim's cookies, so they pass.
+ * cannot attach an Authorization header without a CORS preflight we never allow). The Origin header is checked
+ * (Referer when Origin is absent) against APP_URL's host and the request's own host. Requests with neither Origin,
+ * Referer nor a cross-site Sec-Fetch-Site are non-browser clients, which cannot ride a victim's cookies, so they pass.
  */
 export function assertSameOrigin(request: NextRequest): void {
   if (bearerPresent(request)) return;
   const allowed = new Set([appHost(), requestHost(request)].filter((h): h is string => Boolean(h)));
   const origin = request.headers.get("origin");
-  if (origin) {
-    let host: string | null = null;
-    try {
-      host = origin === "null" ? null : new URL(origin).host.toLowerCase();
-    } catch {
-      host = null;
-    }
+  const referer = request.headers.get("referer");
+  if (origin !== null || referer) {
+    const host = origin !== null ? hostOf(origin) : hostOf(referer);
     if (!host || !allowed.has(host)) throw forbidden("Cross-origin request rejected", { reason: "csrf" });
     return;
   }
@@ -153,4 +167,12 @@ export async function parseJson<S extends z.ZodType>(
     }
   }
   return schema.parse(value);
+}
+
+/** Parses query parameters (first value of each key) against a zod schema. */
+export function parseQuery<S extends z.ZodType>(request: NextRequest | Request, schema: S): z.output<S> {
+  const params = new URL(request.url).searchParams;
+  const record: Record<string, string> = {};
+  for (const [key, value] of params) if (!(key in record)) record[key] = value;
+  return schema.parse(record);
 }

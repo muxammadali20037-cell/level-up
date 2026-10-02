@@ -16,14 +16,19 @@ import { canTransition, type PaymentProviderKey, type PaymentStatus } from "../s
 export interface StoredPayment extends PaymentRecord {
   readonly failureReason?: string;
   readonly paidAt?: number;
+  /** payments.target_id (e.g. the assessment result); null for target-less purchases. */
+  readonly targetId?: string | null;
 }
 
 export class MemoryPaymentStore implements PaymentStore {
   readonly payments = new Map<string, StoredPayment>();
   readonly txns = new Map<string, ProviderTxnRecord>();
   readonly events: PaymentEventInput[] = [];
+  /** targetId → id of the payment (or a source label such as "admin") that unlocked it. */
+  readonly unlocks = new Map<string, string>();
   private readonly eventKeys = new Set<string>();
   private seq = 0;
+  private merchantSeq = 1000;
 
   addPayment(input: {
     id: string;
@@ -34,6 +39,8 @@ export class MemoryPaymentStore implements PaymentStore {
     userId?: string;
     createdAt?: number;
     providerPaymentId?: string | null;
+    expiresAt?: number | null;
+    targetId?: string | null;
   }): StoredPayment {
     const payment: StoredPayment = {
       userId: "00000000-0000-4000-8000-000000000001",
@@ -71,13 +78,16 @@ export class MemoryPaymentStore implements PaymentStore {
       throw new Error("provider_transactions_match_payment");
     }
     this.seq += 1;
+    this.merchantSeq += 1;
     const txn: ProviderTxnRecord = {
-      id: `txn-${this.seq}`,
+      ...input,
+      id: `00000000-0000-4000-a000-${String(this.seq).padStart(12, "0")}`,
       performTime: null,
       cancelTime: null,
       reason: null,
-      raw: {},
-      ...input,
+      merchantRef: this.merchantSeq,
+      providerTime: input.providerTime ?? null,
+      raw: input.raw ?? {},
     };
     this.txns.set(txn.id, txn);
     return txn;
@@ -104,10 +114,25 @@ export class MemoryPaymentStore implements PaymentStore {
     if (this.payments.get(paymentId)?.status === "created") this.transition(paymentId, "pending");
   }
 
+  /** Marks a target as unlocked by something other than a payment of this store (e.g. an admin unlock). */
+  unlockTarget(targetId: string, by = "admin"): void {
+    this.unlocks.set(targetId, by);
+  }
+
   async markPaid(paymentId: string, input: MarkPaidInput): Promise<MarkPaidResult> {
     const payment = this.payments.get(paymentId);
     if (payment?.status === "paid") return "already_paid";
+    const targetId = payment?.targetId ?? null;
+    if (targetId !== null) {
+      for (const other of this.payments.values()) {
+        // mirrors the partial unique index payments_one_paid_per_target
+        if (other.id !== paymentId && other.targetId === targetId && other.status === "paid") {
+          throw new Error("payments_one_paid_per_target");
+        }
+      }
+    }
     this.transition(paymentId, "paid", { providerPaymentId: input.providerPaymentId, paidAt: input.at });
+    if (targetId !== null && !this.unlocks.has(targetId)) this.unlocks.set(targetId, paymentId);
     return "applied";
   }
 
@@ -118,7 +143,16 @@ export class MemoryPaymentStore implements PaymentStore {
 
   async markRefunded(paymentId: string, reason: string): Promise<void> {
     if (this.payments.get(paymentId)?.status === "refunded") return;
-    this.transition(paymentId, "refunded", { failureReason: reason });
+    const next = this.transition(paymentId, "refunded", { failureReason: reason });
+    // the refund transaction deletes payment-sourced unlocks
+    if (next.targetId && this.unlocks.get(next.targetId) === paymentId) this.unlocks.delete(next.targetId);
+  }
+
+  async isTargetUnlocked(paymentId: string): Promise<boolean> {
+    const targetId = this.payments.get(paymentId)?.targetId ?? null;
+    if (targetId === null) return false;
+    const by = this.unlocks.get(targetId);
+    return by !== undefined && by !== paymentId;
   }
 
   async recordEvent(input: PaymentEventInput): Promise<"new" | "duplicate"> {

@@ -53,9 +53,14 @@ export interface ClickParams {
   /** Present on Complete only. */
   readonly merchantPrepareId: string | null;
   readonly amount: string;
-  /** Amount in tiyin, parsed without floating point ("1000" and "1000.00" → 100000). */
-  readonly amountTiyin: number;
+  /**
+   * Amount in tiyin, parsed without floating point ("1000" and "1000.00" → 100000); null when `amount` is not a
+   * non-negative decimal with at most 2 significant fraction digits (answered with -2 after the sign check).
+   */
+  readonly amountTiyin: number | null;
   readonly action: number;
+  /** `action` exactly as received — the sign is computed over the raw string. */
+  readonly actionRaw: string;
   /** Click-side status: 0 ok, < 0 the payment failed/was cancelled at Click. */
   readonly error: number;
   readonly errorNote: string;
@@ -74,6 +79,11 @@ function toSearchParams(raw: ClickRawParams): URLSearchParams {
     else if (value !== undefined) out.append(key, value);
   }
   return out;
+}
+
+/** All received fields as a plain record (verbatim payload for payment_events). */
+export function clickFields(raw: ClickRawParams): Record<string, string> {
+  return Object.fromEntries(toSearchParams(raw).entries());
 }
 
 function single(params: URLSearchParams, key: string): string | null {
@@ -98,13 +108,18 @@ export function parseClickParams(raw: ClickRawParams, expectMerchantPrepareId: b
   for (const key of required) {
     if (!get(key)) return { ok: false, partial, reason: `missing ${key}` };
   }
+  for (const key of ["error", "error_note", "click_paydoc_id", "merchant_prepare_id"]) {
+    if (params.getAll(key).length > 1) return { ok: false, partial, reason: `repeated ${key}` };
+  }
   const action = get("action") ?? "";
   const error = get("error") || "0";
   if (!INT_RE.test(action) || !INT_RE.test(error)) return { ok: false, partial, reason: "action/error not an integer" };
   if (!INT_RE.test(get("click_trans_id") ?? "")) return { ok: false, partial, reason: "click_trans_id not an integer" };
+  if (expectMerchantPrepareId && !INT_RE.test(get("merchant_prepare_id") ?? "")) {
+    return { ok: false, partial, reason: "merchant_prepare_id not an integer" };
+  }
   const amount = get("amount") ?? "";
   const amountTiyin = parseMajorToMinor(amount, 2);
-  if (amountTiyin === null) return { ok: false, partial, reason: "amount is not a decimal number" };
   return {
     ok: true,
     params: {
@@ -116,6 +131,7 @@ export function parseClickParams(raw: ClickRawParams, expectMerchantPrepareId: b
       amount,
       amountTiyin,
       action: Number(action),
+      actionRaw: action,
       error: Number(error),
       errorNote: get("error_note") ?? "",
       signTime: get("sign_time") ?? "",
@@ -134,7 +150,7 @@ export function computeClickSign(params: ClickParams, secretKey: string): string
   const prepareId = params.merchantPrepareId ?? "";
   return md5Hex(
     `${params.clickTransId}${params.serviceId}${secretKey}${params.merchantTransId}${prepareId}` +
-      `${params.amount}${params.action}${params.signTime}`,
+      `${params.amount}${params.actionRaw}${params.signTime}`,
   );
 }
 

@@ -9,6 +9,8 @@ import { env } from "@/lib/env";
  */
 export const DEVICE_HEADER = "x-level-device";
 export const REQUEST_ID_HEADER = "x-request-id";
+/** `web | tma | android | ios` (01-architecture §5.1 client identification). */
+export const CLIENT_PLATFORM_HEADER = "x-client-platform";
 
 const DEVICE_ID_RE = /^[A-Za-z0-9_-]{8,64}$/;
 const REQUEST_ID_RE = /^[A-Za-z0-9._:-]{8,128}$/;
@@ -30,6 +32,22 @@ export function clientIp(headers: Headers): string | null {
 export function deviceId(headers: Headers): string | null {
   const value = headers.get(DEVICE_HEADER)?.trim();
   return value && DEVICE_ID_RE.test(value) ? value : null;
+}
+
+export type ClientChannel = "web" | "telegram" | "mobile";
+
+/** Session channel from X-Client-Platform: tma → telegram, android/ios → mobile, anything else → web. */
+export function clientChannel(headers: Headers): ClientChannel {
+  const platform = headers.get(CLIENT_PLATFORM_HEADER)?.trim().toLowerCase();
+  if (platform === "tma" || platform === "telegram") return "telegram";
+  if (platform === "android" || platform === "ios" || platform === "mobile") return "mobile";
+  return "web";
+}
+
+/** ISO country from the hosting edge (Vercel sets x-vercel-ip-country); null when absent or malformed. */
+export function edgeCountry(headers: Headers): string | null {
+  const value = headers.get("x-vercel-ip-country")?.trim().toUpperCase();
+  return value && /^[A-Z]{2}$/.test(value) && value !== "XX" ? value : null;
 }
 
 export function requestId(headers: Headers): string {
