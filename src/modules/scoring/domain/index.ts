@@ -44,7 +44,8 @@ export {
   missingRequirements,
   requirementCurrentValue,
 } from "./requirements";
-export { assignLevel, sortLevels } from "./levels";
+export { RANGE_MARGIN_MAX, assignLevel, rangeMargin, sortLevels } from "./levels";
+export { hierarchicalPosterior, type HierarchicalInput, type HierarchicalPosterior } from "./hierarchical";
 export {
   DEFAULT_SPEEDING_THRESHOLD_MS,
   HIGH_CONFIDENCE,

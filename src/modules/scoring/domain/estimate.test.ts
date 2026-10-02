@@ -2,12 +2,14 @@ import { describe, expect, it } from "vitest";
 import { eapEstimate } from "./eap";
 import {
   compositeFromSkillScores,
+  DEFAULT_TAU,
   estimateAbilities,
   normalizeImportances,
   scoreFromTheta,
   skillScoreMap,
   thetaFromScore,
 } from "./estimate";
+import { hierarchicalPosterior } from "./hierarchical";
 import { item } from "./test-fixtures";
 
 describe("score mapping", () => {
@@ -72,16 +74,19 @@ describe("estimateAbilities", () => {
     expect(result.thetaG).toBeCloseTo(0, 10);
     expect(result.seG).toBeCloseTo(1, 3);
     expect(result.composite).toBe(50);
-    expect(result.compositeSe).toBe(14.3);
     for (const skill of result.skills) {
       expect(skill.measured).toBe(false);
       expect(skill.nItems).toBe(0);
-      expect(skill.theta).toBe(result.thetaG);
-      expect(skill.se).toBeCloseTo(Math.sqrt(result.seG ** 2 + 0.8 ** 2), 12);
+      expect(skill.theta).toBeCloseTo(result.thetaG, 10);
+      // ≈ sqrt(SE_g² + τ²) = 1.80, a little less because the θ grid is truncated at ±4.
+      expect(skill.se).toBeGreaterThan(DEFAULT_TAU);
+      expect(skill.se).toBeLessThan(Math.sqrt(result.seG ** 2 + DEFAULT_TAU ** 2) + 1e-9);
     }
+    // Composite SD includes the skill-level spread, so it exceeds 100/7 × SE_g (14.3).
+    expect(result.compositeSe).toBeGreaterThan(14.3);
   });
 
-  it("estimates θ_g from all items and θ_s from the skill's items with prior N(θ_g, τ²)", () => {
+  it("uses the joint hierarchical posterior for θ_g/θ_s and the unidimensional EAP SD as SE_g", () => {
     const items = [
       item({ skillId: "sales", difficulty: 0.7, credit: 1 }),
       item({ skillId: "sales", difficulty: 1.4, credit: 1 }),
@@ -91,18 +96,47 @@ describe("estimateAbilities", () => {
       item({ skillId: "finance", difficulty: 0, credit: 0 }),
     ];
     const result = estimateAbilities({ items, skills, priorMean: 0 });
-    const general = eapEstimate(items, { mean: 0, sd: 1 });
-    expect(result.thetaG).toBeCloseTo(general.theta, 12);
-    expect(result.seG).toBeCloseTo(general.se, 12);
+    const groups = new Map([
+      ["sales", items.slice(0, 3)],
+      ["finance", items.slice(3)],
+    ]);
+    const post = hierarchicalPosterior({
+      groups,
+      prior: { mean: 0, sd: 1 },
+      tau: DEFAULT_TAU,
+      weights: normalizeImportances(skills),
+    });
+    expect(result.thetaG).toBeCloseTo(post.general.theta, 12);
+    expect(result.seG).toBeCloseTo(eapEstimate(items, { mean: 0, sd: 1 }).se, 12);
+    expect(result.compositeSe).toBe(Math.round((100 / 7) * post.composite.se * 10) / 10);
 
     const [sales, finance, ops] = result.skills;
-    const salesItems = items.filter((i) => i.skillId === "sales");
-    expect(sales?.theta).toBeCloseTo(eapEstimate(salesItems, { mean: general.theta, sd: 0.8 }).theta, 12);
+    expect(sales?.theta).toBeCloseTo(post.skills.get("sales")?.theta ?? NaN, 12);
     expect(sales?.theta).toBeGreaterThan(result.thetaG);
     expect(finance?.theta).toBeLessThan(result.thetaG);
     expect(sales?.nItems).toBe(3);
-    expect(ops).toMatchObject({ measured: false, nItems: 0, theta: result.thetaG });
+    expect(ops).toMatchObject({ measured: false, nItems: 0 });
+    expect(Math.abs((ops?.theta ?? 0) - result.thetaG)).toBeLessThan(0.05); // grid truncation only
     expect(result.composite).toBe(compositeFromSkillScores(skillScoreMap(result.skills), skills));
+  });
+
+  it("keeps an uneven profile uneven: θ_g is not dragged by guessing on the weak skill", () => {
+    // Expected-credit responses of a respondent with θ = +1.5 on "sales" and −1.5 on "finance", 6 items each.
+    const p = (theta: number, b: number): number => 0.25 + 0.75 / (1 + Math.exp(-1.7 * (theta - b)));
+    const bs = [-1, -0.5, 0, 0.5, 1, 1.5];
+    const items = [
+      ...bs.map((b) => item({ skillId: "sales", difficulty: b, credit: p(1.5, b) })),
+      ...bs.map((b) => item({ skillId: "finance", difficulty: b, credit: p(-1.5, b) })),
+    ];
+    const two = [
+      { id: "sales", importance: 1 },
+      { id: "finance", importance: 1 },
+    ];
+    const result = estimateAbilities({ items, skills: two, priorMean: 0 });
+    expect(Math.abs(result.thetaG)).toBeLessThan(0.15);
+    const [sales, finance] = result.skills;
+    expect((sales?.score ?? 0) - (finance?.score ?? 0)).toBeGreaterThan(30); // true gap 43; τ = 0.8 gave ~19
+    expect(estimateAbilities({ items, skills: two, priorMean: 0, tau: 0.8 }).thetaG).toBeLessThan(0.1);
   });
 
   it("shrinks a skill with a single item towards θ_g", () => {
@@ -134,14 +168,17 @@ describe("estimateAbilities", () => {
   });
 
   it("treats a pattern explainable by guessing conservatively (3PL)", () => {
-    // Correct on hard items but wrong on easy ones: the correct answers are attributed to guessing.
+    // Within one skill: correct on hard items but wrong on easy ones — the correct answers are attributed to
+    // guessing. (Across skills the same pattern is a genuine uneven profile, see above.)
     const items = [
       ...Array.from({ length: 8 }, () => item({ skillId: "sales", difficulty: 1.4, credit: 1 })),
-      ...Array.from({ length: 8 }, () => item({ skillId: "finance", difficulty: -1.4, credit: 0 })),
+      ...Array.from({ length: 8 }, () => item({ skillId: "sales", difficulty: -1.4, credit: 0 })),
     ];
     const result = estimateAbilities({ items, skills, priorMean: 0 });
-    expect(result.thetaG).toBeLessThan(-1);
-    expect(result.composite).toBeLessThan(35);
+    const sales = result.skills.find((s) => s.skillId === "sales");
+    expect(sales?.theta).toBeLessThan(-1);
+    expect(result.thetaG).toBeLessThan(-0.5);
+    expect(result.composite).toBeLessThan(40);
   });
 
   it("uses the experience prior mean for θ_g", () => {

@@ -62,18 +62,26 @@ function computeCaps(
   };
 }
 
-/** Next level is plausible within measurement error: composite and score gates within margin, rest met. */
-function upperRangePlausible(next: LevelDefinition, input: LevelAssignmentInput): boolean {
-  if (next.minComposite - input.composite > input.compositeSe) return false;
+/** Cap of the "close to the next level" margin, in score points (a quarter of a default 10-point band). */
+export const RANGE_MARGIN_MAX = 2.5;
+
+/** Margin of the next-level range: min(se / 2, 2.5) score points (0 for a missing or invalid se). */
+export function rangeMargin(se: number | undefined): number {
+  return se !== undefined && Number.isFinite(se) && se > 0 ? Math.min(se / 2, RANGE_MARGIN_MAX) : 0;
+}
+
+/** Composite and every unmet gating score requirement of `next` are within their margin; all other gates met. */
+function closeToNext(next: LevelDefinition, input: LevelAssignmentInput): boolean {
+  const margin = rangeMargin(input.compositeSe);
+  if (!meetsThreshold(input.composite + margin, next.minComposite)) return false;
   return next.requirements.every((r) => {
     if (!r.gatesAssessed || isRequirementMet(r, input)) return true;
     const threshold = effectiveThreshold(r);
-    if (r.type === "composite_min") return meetsThreshold(input.composite + input.compositeSe, threshold);
+    if (r.type === "composite_min") return meetsThreshold(input.composite + margin, threshold);
     if (r.type === "skill_min" && r.skillId) {
       const score = input.skillScores[r.skillId];
       if (score === undefined) return false;
-      const margin = input.skillScoreSes?.[r.skillId] ?? input.compositeSe;
-      return meetsThreshold(score + margin, threshold);
+      return meetsThreshold(score + rangeMargin(input.skillScoreSes?.[r.skillId] ?? input.compositeSe), threshold);
     }
     return false;
   });
@@ -86,14 +94,9 @@ function computeRange(
   caps: Caps,
 ): readonly [number, number] | null {
   const current = levels[idx];
-  if (!current) return null;
   const next = levels[idx + 1];
-  if (next && !caps.blocks(next) && upperRangePlausible(next, input)) return [current.number, next.number];
-  const previous = levels[idx - 1];
-  if (previous && input.composite - current.minComposite < input.compositeSe) {
-    return [previous.number, current.number];
-  }
-  return null;
+  if (!current || !next || caps.blocks(next) || !closeToNext(next, input)) return null;
+  return [current.number, next.number];
 }
 
 /**
@@ -109,14 +112,16 @@ function computeRange(
  *   explain (AC-F07-03).
  * - Verified counts only feed explicit verified_scenario / practical_action requirements (gating or not) and the
  *   `missing` lists; they never lift the verification cap.
- * - range: [L, L+1] when L+1 is not blocked by a cap, minComposite(L+1) − composite ≤ compositeSe and each unmet
- *   gating skill/composite requirement of L+1 is within its margin (skill SE, default compositeSe) while all its
- *   other gating requirements are met; else [L−1, L] when composite − minComposite(L) < compositeSe; else null.
+ * - range ("close to the next level", UI: "Level L, close to L+1"): [L, L+1] only when L+1 is attainable (not
+ *   blocked by the verification or experience cap), composite ≥ minComposite(L+1) − margin with
+ *   margin = min(compositeSe / 2, 2.5), and each unmet gating skill/composite requirement of L+1 is within its own
+ *   margin (min(skill SE / 2, 2.5), skill SE defaulting to compositeSe) while all its other gating requirements
+ *   are met. A lower-side range ([L−1, L]) is never reported. Otherwise null.
  * - evaluations: one per level with cumulative `met` and every unmet requirement (see `missingRequirements`).
  *
- * Calibration note: compositeSe = 100/7 × SE_g is ≥ ~6 points for a 7–15 item test with default item parameters,
- * more than half a 10-point band, so almost every uncapped result reports a range. That is the literal brief §7
- * rule ("within SE-equivalent of a level boundary"); narrowing it needs a spec/calibration decision.
+ * Calibration (07a-scoring-calibration.md): the old symmetric "within one compositeSe of a boundary" rule reported a
+ * range for ~85–95% of results (compositeSe ≈ 6–9 points vs 10-point bands); the one-sided rule above reports it
+ * for roughly the top quarter of each band.
  */
 export function assignLevel(
   input: LevelAssignmentInput,

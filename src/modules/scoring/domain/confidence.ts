@@ -61,10 +61,11 @@ export function countUnmeasuredImportantSkills(
  * Reasons (fixed order): few_items (n < 12), high_uncertainty (SE_g > 0.35), speeding, self_report_gap,
  * near_boundary (informational), unmeasured_skills (informational, when > 0 important skills are unmeasured).
  *
- * Calibration note (literal brief §7 thresholds, kept on purpose pending a spec decision): with brief-default
- * item parameters (a = 1, c = 1/options) even 15 perfectly targeted items give SE_g ≈ 0.42 > 0.35, so HIGH is
- * practically unreachable and high_uncertainty is listed on every result until items are calibrated (higher a,
- * partial-credit c = 0 items) or the HIGH threshold is re-derived from simulation.
+ * Calibration (07a-scoring-calibration.md): HIGH is designed for the extended assessment (deep report, up to 25
+ * items) and for verification; MEDIUM is the normal outcome of the 7–15 item test. The test stops as soon as
+ * SE_g ≤ targetSe (0.45), and with brief-default items (a = 1, c = 1/n) SE_g ≤ 0.35 needs ≈ 16 perfectly targeted
+ * items, so 0% of simulated default sessions reach HIGH (minimum SE_g ≈ 0.46; ≈ 60% MEDIUM, the rest LOW). Even a
+ * 25-item extended run reaches HIGH only with calibrated items of a ≈ 1.4 (≈ 17% of simulated respondents).
  */
 export function assessConfidence(input: ConfidenceInput): ConfidenceAssessment {
   let rank: number;

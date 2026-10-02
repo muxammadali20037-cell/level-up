@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { DEFAULT_PROFESSION_CONFIG, type ProfessionConfig } from "@/modules/catalog/domain/types";
 import { compositeFromSkillScores } from "./estimate";
-import { assignLevel, sortLevels } from "./levels";
+import { assignLevel, RANGE_MARGIN_MAX, rangeMargin, sortLevels } from "./levels";
 import { defaultLevels, levelInput, requirement } from "./test-fixtures";
 
 const config = DEFAULT_PROFESSION_CONFIG;
@@ -173,37 +173,54 @@ describe("assignLevel — caps", () => {
 });
 
 describe("assignLevel — range", () => {
-  it("reports [L, L+1] just below the next boundary", () => {
-    expect(assignLevel(levelInput({ composite: 43, compositeSe: 5 }), levels, config).range).toEqual([4, 5]);
-    expect(assignLevel(levelInput({ composite: 40, compositeSe: 5 }), levels, config).range).toEqual([4, 5]);
+  it("reports [L, L+1] only when the composite is within min(SE/2, 2.5) below the next boundary", () => {
+    const at = (composite: number, compositeSe: number) =>
+      assignLevel(levelInput({ composite, compositeSe }), levels, config).range;
+    expect(at(43, 5)).toEqual([4, 5]); // margin 2.5 → from 42.5
+    expect(at(42.5, 5)).toEqual([4, 5]);
+    expect(at(42.4, 5)).toBeNull();
+    expect(at(40, 5)).toBeNull(); // the old "within one SE" rule reported [4, 5] here
+    expect(at(43, 3)).toBeNull(); // margin 1.5 → from 43.5
+    expect(at(43.5, 3)).toEqual([4, 5]);
+    expect(at(42.6, 20)).toEqual([4, 5]); // margin capped at 2.5
+    expect(at(42.4, 20)).toBeNull();
+    expect(rangeMargin(5)).toBe(2.5);
+    expect(rangeMargin(3)).toBe(1.5);
+    expect(rangeMargin(Number.NaN)).toBe(0);
+    expect(RANGE_MARGIN_MAX).toBe(2.5);
   });
 
-  it("reports [L−1, L] just above the current boundary", () => {
-    expect(assignLevel(levelInput({ composite: 36, compositeSe: 5 }), levels, config).range).toEqual([3, 4]);
+  it("never reports a lower-side range", () => {
+    expect(assignLevel(levelInput({ composite: 36, compositeSe: 5 }), levels, config).range).toBeNull();
+    expect(assignLevel(levelInput({ composite: 35, compositeSe: 20 }), levels, config).range).toBeNull();
   });
 
-  it("reports no range when the composite is far from both boundaries or SE is 0", () => {
+  it("reports no range when the composite is far from the next boundary or SE is 0", () => {
     expect(assignLevel(levelInput({ composite: 40, compositeSe: 3 }), levels, config).range).toBeNull();
     expect(assignLevel(levelInput({ composite: 44.9, compositeSe: 0 }), levels, config).range).toBeNull();
     expect(assignLevel(levelInput({ composite: 0, compositeSe: 5 }), levels, config).range).toBeNull();
   });
 
-  it("uses skill margins for gated next levels", () => {
+  it("uses skill margins min(skill SE/2, 2.5) for gated next levels", () => {
     const gated = defaultLevels({ 5: [requirement({ type: "skill_min", skillId: "finance", threshold: 45 })] });
-    const near = levelInput({ composite: 50, compositeSe: 3, skillScores: { finance: 41 } });
-    expect(assignLevel(near, gated, config).range).toBeNull();
+    const near = levelInput({ composite: 50, compositeSe: 3, skillScores: { finance: 43 } });
+    expect(assignLevel(near, gated, config).level).toBe(4);
+    expect(assignLevel(near, gated, config).range).toBeNull(); // fallback compositeSe 3 → margin 1.5
     expect(assignLevel({ ...near, skillScoreSes: { finance: 4 } }, gated, config).range).toEqual([4, 5]);
     expect(assignLevel({ ...near, skillScoreSes: { finance: 3.9 } }, gated, config).range).toBeNull();
     expect(assignLevel({ ...near, compositeSe: 4 }, gated, config).range).toEqual([4, 5]);
+    const far = { ...near, skillScores: { finance: 42 }, skillScoreSes: { finance: 30 } };
+    expect(assignLevel(far, gated, config).range).toBeNull(); // margin capped at 2.5
   });
 
   it("does not offer a next level that a cap blocks", () => {
-    const capped = assignLevel(levelInput({ composite: 73, compositeSe: 5 }), levels, config);
+    const capped = assignLevel(levelInput({ composite: 74, compositeSe: 5 }), levels, config);
     expect(capped.level).toBe(7);
     expect(capped.range).toBeNull();
     const experience = assignLevel(levelInput({ composite: 44, compositeSe: 5, experience: "none" }), levels, config);
+    expect(assignLevel(levelInput({ composite: 44, compositeSe: 5 }), levels, config).range).toEqual([4, 5]);
     expect(experience).toMatchObject({ level: 4, range: null });
     // Level 8 stays blocked for the assessed range even with verified scenarios.
-    expect(assignLevel(levelInput({ composite: 73, compositeSe: 5, verifiedScenarios: 1 }), levels, config).range).toBeNull();
+    expect(assignLevel(levelInput({ composite: 74, compositeSe: 5, verifiedScenarios: 1 }), levels, config).range).toBeNull();
   });
 });

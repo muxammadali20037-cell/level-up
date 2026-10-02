@@ -9,6 +9,17 @@ import type {
 /**
  * Bump on ANY change that could alter a score for the same answers. Results store the version they were scored
  * with; historical results are never silently re-scored.
+ *
+ * "irt3pl-eap-hier-v1" = the parameters fixed by the calibration study (docs/architecture/07a-scoring-calibration.md,
+ * harness scripts/calibration/simulate.ts) before anything shipped:
+ * - items: 3PL, D = 1.7, b = (target_level − 5) × 0.7, a default 1.0 (self_report 0.5), weight 1 (self_report
+ *   0.5), c = `guessingFor(rule, n)`: 1/n for single_best AND partial_credit, 0 for likert/open_ai;
+ * - ability: joint two-level posterior on the grid [−4, 4] step 0.05: θ_g ~ N(μ0(experience), 1.0²),
+ *   θ_s | θ_g ~ N(θ_g, τ²) with τ = 1.5 (DEFAULT_TAU); θ_g, θ_s = posterior means (`hierarchicalPosterior`);
+ * - SE_g (stop rule, confidence) = posterior SD of the unidimensional EAP over all items, same prior;
+ *   compositeSe = 100/7 × posterior SD of the importance-weighted composite θ;
+ * - score = clamp(round((θ + 3.5)/7 × 100)); composite = importance-weighted mean of skill scores;
+ * - level range only "close to the next level": composite ≥ minComposite(L+1) − min(compositeSe/2, 2.5).
  */
 export const SCORING_MODEL_VERSION = "irt3pl-eap-hier-v1";
 
@@ -30,7 +41,7 @@ export interface ScoringInput {
   readonly priorMean: number;
   /** Prior SD of general ability. Default 1.0. */
   readonly priorSd?: number;
-  /** SD of skill ability around general ability. Default 0.8. */
+  /** SD of skill ability around general ability. Default 1.5 (DEFAULT_TAU). */
   readonly tau?: number;
 }
 
@@ -93,7 +104,10 @@ export interface LevelAssignment {
   /** Level before verification/experience caps. */
   readonly uncappedLevel: number;
   readonly cappedBy: "verification" | "experience" | null;
-  /** When the composite is within one SE of a boundary: e.g. [4, 5]. */
+  /**
+   * "Close to the next level": [L, L+1] when the composite is within min(compositeSe / 2, 2.5) points below
+   * minComposite(L+1) and L+1 is attainable (not verification/experience capped). Never a lower-side range.
+   */
   readonly range: readonly [number, number] | null;
   readonly evaluations: readonly LevelEvaluation[];
 }
@@ -111,8 +125,9 @@ export interface LevelAssignmentInput {
   readonly verifiedScenarios: number;
   readonly practicalActions: number;
   /**
-   * Optional per-skill uncertainty in score points (100/7 × posterior SD of θ_s). Used as the margin of a skill
-   * gate when deciding whether to report a level range. Missing entries fall back to `compositeSe`.
+   * Optional per-skill uncertainty in score points (100/7 × posterior SD of θ_s). A skill gate of L+1 counts as
+   * "close" within min(SE / 2, 2.5) when deciding whether to report a level range. Missing entries fall back to
+   * `compositeSe`.
    */
   readonly skillScoreSes?: Readonly<Record<string, number>>;
 }
@@ -164,7 +179,7 @@ export interface ConfidenceInput {
    * see `computeSelfReportGap`); null when there is no self-report or no tested item.
    */
   readonly selfReportGap: number | null;
-  /** True when a level range is reported (composite within one SE of a boundary). */
+  /** True when a level range is reported (composite close to the next attainable level, see `assignLevel`). */
   readonly nearBoundary: boolean;
   /** Number of important skills that received no item. */
   readonly unmeasuredImportantSkills: number;

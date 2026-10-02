@@ -1,6 +1,6 @@
 import type { I18nText } from "@/lib/i18n/text";
 import type { ExperienceBand, GoalType, ProfessionConfig, WorkingStatus } from "@/modules/catalog/domain/types";
-import type { ScoringSkill } from "@/modules/scoring/domain/types";
+import type { AbilityEstimate, ScoringInput, ScoringSkill } from "@/modules/scoring/domain/types";
 
 /** Question formats. Assessments must mix them; never only "rate yourself 1–10". */
 export type QuestionType = "knowledge" | "judgment" | "scenario" | "decision" | "self_report" | "open";
@@ -123,6 +123,11 @@ export interface RoutingInput {
   readonly rngSeed: number;
   /** Question keys this user answered within the retest window; avoided while the bank allows. */
   readonly recentlySeenKeys?: ReadonlySet<string>;
+  /**
+   * Ability estimator behind item selection and the stop rule. Defaults to the production `estimateAbilities`;
+   * only calibration studies (scripts/calibration) inject alternative scoring models here.
+   */
+  readonly estimator?: (input: ScoringInput) => AbilityEstimate;
 }
 
 export type RoutingPhase = "coverage" | "precision";

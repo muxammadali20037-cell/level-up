@@ -16,7 +16,7 @@ export interface SelfReportGapOptions {
   readonly priorMean: number;
   /** Default DEFAULT_PRIOR_SD (1.0). */
   readonly priorSd?: number;
-  /** SD of a skill ability around general ability. Default DEFAULT_TAU (0.8). */
+  /** SD of a skill ability around general ability. Default DEFAULT_TAU (1.5). */
   readonly tau?: number;
 }
 

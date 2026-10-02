@@ -45,4 +45,5 @@ export {
   shouldShuffleOptions,
   type DisplayedOption,
 } from "./option-order";
+export { guessingFor } from "./item-params";
 export { toPublicQuestion } from "./public-question";

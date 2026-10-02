@@ -61,7 +61,8 @@ function stop(ctx: StepContext, reason: RoutingStopReason): RoutingDecision {
  * Chooses the next item of an adaptive session, or decides to stop (brief §6). Pure and deterministic:
  * the same input always yields the same decision.
  *
- * Estimate: θ_g, SE_g and θ_s, SD_s from `estimateAbilities` over the answered items (n = answered.length).
+ * Estimate: θ_g, SE_g and θ_s, SD_s from `estimateAbilities` (or the injected `input.estimator`) over the answered
+ * items (n = answered.length).
  * Pool: see `buildSessionPool` (specialization filter, never repeat an id/key, no open items, avoid recently
  * seen keys while ≥ maxQuestions − n fresh items remain).
  *
@@ -86,7 +87,11 @@ export function selectNextQuestion(input: RoutingInput): RoutingDecision {
   const config = normalizeRoutingConfig(input.config);
   const n = input.answered.length;
   const pool = buildSessionPool(input, config);
-  const estimate = estimateAbilities({ items: input.answered, skills: input.skills, priorMean: input.priorMean });
+  const estimate = (input.estimator ?? estimateAbilities)({
+    items: input.answered,
+    skills: input.skills,
+    priorMean: input.priorMean,
+  });
   const ctx: StepContext = { input, config, n, pool, estimate };
 
   if (n >= config.maxQuestions) return stop(ctx, "max_items");

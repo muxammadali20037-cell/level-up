@@ -1,12 +1,16 @@
 import type { AnsweredItem } from "@/modules/assessments/domain/types";
 import { eapEstimate } from "./eap";
+import { hierarchicalPosterior } from "./hierarchical";
 import { clamp, nonNegative, round1 } from "./numeric";
 import type { AbilityEstimate, ScoringInput, ScoringSkill, SkillEstimate } from "./types";
 
 /** Prior SD of general ability θ_g. */
 export const DEFAULT_PRIOR_SD = 1.0;
-/** SD of a skill ability θ_s around θ_g (hierarchical prior). */
-export const DEFAULT_TAU = 0.8;
+/**
+ * SD of a skill ability θ_s around θ_g (hierarchical prior). 1.5 = the largest τ that keeps skill-score RMSE within
+ * 5% of τ = 0.8 while more than doubling the preserved strong-vs-weak gap (07a-scoring-calibration.md).
+ */
+export const DEFAULT_TAU = 1.5;
 /** Score mapping: θ = −3.5 → 0, θ = 0 → 50, θ = 3.5 → 100. */
 export const SCORE_THETA_OFFSET = 3.5;
 export const SCORE_THETA_SPAN = 7;
@@ -59,30 +63,30 @@ export function compositeFromSkillScores(
   return round1(sum);
 }
 
-function skillEstimate(
-  skillId: string,
-  items: readonly AnsweredItem[],
-  thetaG: number,
-  seG: number,
-  tau: number,
-): SkillEstimate {
-  if (items.length === 0) {
-    const se = Math.sqrt(seG * seG + tau * tau);
-    return { skillId, theta: thetaG, se, score: scoreFromTheta(thetaG), nItems: 0, measured: false };
+function groupBySkill(items: readonly AnsweredItem[]): Map<string, AnsweredItem[]> {
+  const groups = new Map<string, AnsweredItem[]>();
+  for (const item of items) {
+    const list = groups.get(item.skillId);
+    if (list) list.push(item);
+    else groups.set(item.skillId, [item]);
   }
-  const { theta, se } = eapEstimate(items, { mean: thetaG, sd: tau });
-  return { skillId, theta, se, score: scoreFromTheta(theta), nItems: items.length, measured: true };
+  return groups;
 }
 
 /**
- * Estimates general and per-skill abilities ("irt3pl-eap-hier-v1"):
+ * Estimates general and per-skill abilities (scoring model "irt3pl-eap-hier-v1", calibrated in
+ * docs/architecture/07a-scoring-calibration.md):
  *
- * 1. θ_g = EAP over ALL answered items with prior N(priorMean, priorSd²) (priorSd default 1.0); SE_g = posterior SD.
- * 2. For each skill with items: θ_s = EAP over that skill's items only with prior N(θ_g, τ²) (τ default 0.8) —
- *    empirical-Bayes shrinkage: a skill with one item stays near θ_g, many consistent items pull it away.
- * 3. A skill with no items: θ_s = θ_g, SE = sqrt(SE_g² + τ²), measured = false.
+ * 1. Joint two-level posterior on the θ grid (`hierarchicalPosterior`): θ_g ~ N(priorMean, priorSd²) (priorSd
+ *    default 1.0), θ_s | θ_g ~ N(θ_g, τ²) (τ default 1.5), each item informs only its own skill's θ_s. θ_g and
+ *    every θ_s are posterior means with θ_g integrated out, so a strong and a weak skill no longer drag one
+ *    plug-in θ_g (and through it each other) the way a unidimensional fit does.
+ * 2. SE_g (stop rule, confidence) = posterior SD of the unidimensional EAP over ALL items with the same prior:
+ *    the precision index the brief §6/§7 thresholds (target 0.45, HIGH 0.35, MEDIUM 0.55) are defined on.
+ * 3. A skill with no items: posterior of θ_g widened by τ (≈ N(θ_g, SE² + τ²)), measured = false.
  * 4. Skill score = scoreFromTheta(θ_s); composite = importance-weighted mean of skill scores (1 decimal);
- *    compositeSe = round1(100/7 × SE_g). With no skills at all the composite falls back to scoreFromTheta(θ_g).
+ *    compositeSe = round1(100/7 × posterior SD of θ_c = Σ w_s·θ_s) (skill-level uncertainty included). With no
+ *    skills at all the composite falls back to scoreFromTheta(θ_g) and compositeSe to 100/7 × SE_g.
  *
  * Items whose skill is not listed in `skills` still inform θ_g. Skill estimates follow `skills` order
  * (duplicates removed). Throws RangeError when priorSd or τ is not a positive finite number.
@@ -91,34 +95,31 @@ export function estimateAbilities(input: ScoringInput): AbilityEstimate {
   const priorSd = input.priorSd ?? DEFAULT_PRIOR_SD;
   const tau = input.tau ?? DEFAULT_TAU;
   if (!(Number.isFinite(tau) && tau > 0)) throw new RangeError(`Invalid tau: ${tau}`);
-  const general = eapEstimate(input.items, { mean: input.priorMean, sd: priorSd });
-
-  const bySkill = new Map<string, AnsweredItem[]>();
-  for (const item of input.items) {
-    const list = bySkill.get(item.skillId);
-    if (list) list.push(item);
-    else bySkill.set(item.skillId, [item]);
-  }
+  const prior = { mean: input.priorMean, sd: priorSd };
+  const unidimensional = eapEstimate(input.items, prior);
+  const groups = groupBySkill(input.items);
+  const post = hierarchicalPosterior({ groups, prior, tau, weights: normalizeImportances(input.skills) });
 
   const seen = new Set<string>();
   const skills: SkillEstimate[] = [];
   for (const skill of input.skills) {
     if (seen.has(skill.id)) continue;
     seen.add(skill.id);
-    skills.push(skillEstimate(skill.id, bySkill.get(skill.id) ?? [], general.theta, general.se, tau));
+    const { theta, se } = post.skills.get(skill.id) ?? post.general;
+    const nItems = groups.get(skill.id)?.length ?? 0;
+    skills.push({ skillId: skill.id, theta, se, score: scoreFromTheta(theta), nItems, measured: nItems > 0 });
   }
 
-  const composite =
-    skills.length > 0
-      ? compositeFromSkillScores(skillScoreMap(skills), input.skills)
-      : scoreFromTheta(general.theta);
-
+  const hasSkills = skills.length > 0;
+  const composite = hasSkills
+    ? compositeFromSkillScores(skillScoreMap(skills), input.skills)
+    : scoreFromTheta(post.general.theta);
   return {
-    thetaG: general.theta,
-    seG: general.se,
+    thetaG: post.general.theta,
+    seG: unidimensional.se,
     skills,
     composite,
-    compositeSe: round1(scoreSeFromThetaSe(general.se)),
+    compositeSe: round1(scoreSeFromThetaSe(hasSkills ? post.composite.se : unidimensional.se)),
   };
 }
 
